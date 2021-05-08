@@ -1,3 +1,3 @@
-module github.com/bounded-infinity/enumeration
+module github.com/boundedinfinity/enumeration
 
 go 1.14
