@@ -115,12 +115,26 @@ var (
 	}
 )
 
-func {{ .Name }}EnumFromString(v string) ({{ .Name }}Enum, error) {
-	var o {{ .Name }}Enum
+func Is{{ .Name }}Enum(v string) bool {
 	var f bool
 
 	for _, e := range {{ .Name }}Enums {
 		if string(e) == v {
+			f = true
+			break
+		}
+	}
+
+	return f
+}
+
+func {{ .Name }}EnumParse(v string) ({{ .Name }}Enum, error) {
+	var o {{ .Name }}Enum
+	var f bool
+	n := strings.ToLower(v)
+
+	for _, e := range {{ .Name }}Enums {
+		if strings.ToLower(e.String()) == n {
 			o = e
 			f = true
 			break
@@ -128,18 +142,23 @@ func {{ .Name }}EnumFromString(v string) ({{ .Name }}Enum, error) {
 	}
 
 	if !f {
-		var ss []string
-
-		for _, e := range {{ .Name }}Enums {
-			ss = append(ss, string(e))
-		}
-		
-		format := "invalid enumeration type '%v', must be one of %v"
-		
-		return o, fmt.Errorf(format, v, strings.Join(ss, ","))
+		return o, Err{{ .Name }}EnumNotFound(v)
 	}
 
 	return o, nil
+}
+
+func Err{{ .Name }}EnumNotFound(v string) error {
+	var ss []string
+
+	for _, e := range {{ .Name }}Enums {
+		ss = append(ss, string(e))
+	}
+	
+	return fmt.Errorf(
+		"invalid enumeration type '%v', must be one of %v",
+		v, strings.Join(ss, ","),
+	)
 }
 
 func (t {{ .Name }}Enum) String() string {
@@ -157,7 +176,7 @@ func (t *{{ .Name }}Enum) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-    e, err := {{ .Name }}EnumFromString(s)
+    e, err := {{ .Name }}EnumParse(s)
 
     if err != nil {
         return err
