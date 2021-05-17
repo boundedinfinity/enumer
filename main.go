@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/ozgio/strutil"
 )
 
 type data struct {
@@ -18,18 +20,24 @@ type data struct {
 	Package  string
 	Output   string
 	Filename string
-	Items    []string
+	Suffix   string
+	Prefix   string
+	Items    map[string]string
 }
 
 func main() {
-	var args data
-	var rawItems string
+	args := data{
+		Items: make(map[string]string),
+	}
+	var itemArgs string
 
 	flag.StringVar(&args.Name, "name", "", "The name of the enumeration.")
 	flag.StringVar(&args.Package, "package", "", "The package of the enumeration.")
 	flag.StringVar(&args.Output, "output", "", "The output path of the enumeration.")
 	flag.StringVar(&args.Filename, "filename", "", "The output path used for the optinoal being generated.")
-	flag.StringVar(&rawItems, "items", "", "The comma separated list of items.")
+	flag.StringVar(&args.Prefix, "prefix", "", "Prefix is prepended to each item.")
+	flag.StringVar(&args.Suffix, "suffix", "", "Suffix is appended to each item.")
+	flag.StringVar(&itemArgs, "items", "", "The comma separated list of items.")
 	flag.Parse()
 
 	if args.Name == "" {
@@ -37,12 +45,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if rawItems == "" {
+	if itemArgs == "" {
 		fmt.Printf("items cannot be empty")
 		os.Exit(1)
 	}
 
-	args.Items = strings.Split(rawItems, ",")
+	for _, v := range strings.Split(itemArgs, ",") {
+		k := v
+		k = strings.ReplaceAll(k, "-", " ")
+		k = strings.ReplaceAll(k, "_", " ")
+		k = strutil.ToCamelCase(k)
+		args.Items[k] = v
+	}
 
 	if args.Package == "" {
 		args.Package = "main"
@@ -99,26 +113,26 @@ import (
 	"strings"
 )
 
-type {{ .Name }}Enum string
+type {{ .Prefix }}{{ .Name }}{{ .Suffix }} string
 
 const (
-{{ range .Items }}
-	{{- $.Name }}_{{ title . }} {{ $.Name }}Enum = "{{ . }}"
+{{ range $k, $v := .Items }}
+	{{- $.Name }}_{{ title $k }} {{ $.Prefix }}{{ $.Name }}{{ $.Suffix }} = "{{ $v }}"
 {{ end }}
 )
 
 var (
-	{{ .Name }}Enums = []{{ .Name }}Enum{
-	{{ range .Items }}
-		{{- $.Name }}_{{ title . }},
+	{{ .Prefix }}{{ .Name }}{{ .Suffix }}s = []{{ .Prefix }}{{ .Name }}{{ .Suffix }}{
+	{{ range $k, $v := .Items }}
+		{{- $.Name }}_{{ title $k }},
 	{{ end }}
 	}
 )
 
-func Is{{ .Name }}Enum(v string) bool {
+func Is{{ .Prefix }}{{ .Name }}{{ .Suffix }}(v string) bool {
 	var f bool
 
-	for _, e := range {{ .Name }}Enums {
+	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}s {
 		if string(e) == v {
 			f = true
 			break
@@ -128,12 +142,12 @@ func Is{{ .Name }}Enum(v string) bool {
 	return f
 }
 
-func {{ .Name }}EnumParse(v string) ({{ .Name }}Enum, error) {
-	var o {{ .Name }}Enum
+func {{ .Prefix }}{{ .Name }}{{ .Suffix }}Parse(v string) ({{ .Prefix }}{{ .Name }}{{ .Suffix }}, error) {
+	var o {{ .Prefix }}{{ .Name }}{{ .Suffix }}
 	var f bool
 	n := strings.ToLower(v)
 
-	for _, e := range {{ .Name }}Enums {
+	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}s {
 		if strings.ToLower(e.String()) == n {
 			o = e
 			f = true
@@ -142,16 +156,16 @@ func {{ .Name }}EnumParse(v string) ({{ .Name }}Enum, error) {
 	}
 
 	if !f {
-		return o, Err{{ .Name }}EnumNotFound(v)
+		return o, Err{{ .Prefix }}{{ .Name }}{{ .Suffix }}NotFound(v)
 	}
 
 	return o, nil
 }
 
-func Err{{ .Name }}EnumNotFound(v string) error {
+func Err{{ .Prefix }}{{ .Name }}{{ .Suffix }}NotFound(v string) error {
 	var ss []string
 
-	for _, e := range {{ .Name }}Enums {
+	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}s {
 		ss = append(ss, string(e))
 	}
 	
@@ -161,22 +175,22 @@ func Err{{ .Name }}EnumNotFound(v string) error {
 	)
 }
 
-func (t {{ .Name }}Enum) String() string {
+func (t {{ .Prefix }}{{ .Name }}{{ .Suffix }}) String() string {
 	return string(t)
 }
 
-func (t {{ .Name }}Enum) MarshalJSON() ([]byte, error) {
+func (t {{ .Prefix }}{{ .Name }}{{ .Suffix }}) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]byte(t))
 }
 
-func (t *{{ .Name }}Enum) UnmarshalJSON(data []byte) error {
+func (t *{{ .Prefix }}{{ .Name }}{{ .Suffix }}) UnmarshalJSON(data []byte) error {
 	var s string
 
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
-    e, err := {{ .Name }}EnumParse(s)
+    e, err := {{ .Prefix }}{{ .Name }}{{ .Suffix }}Parse(s)
 
     if err != nil {
         return err
