@@ -180,7 +180,7 @@ func (t {{ .Prefix }}{{ .Name }}{{ .Suffix }}) String() string {
 }
 
 func (t {{ .Prefix }}{{ .Name }}{{ .Suffix }}) MarshalJSON() ([]byte, error) {
-	return json.Marshal([]byte(t))
+	return json.Marshal(string(t))
 }
 
 func (t *{{ .Prefix }}{{ .Name }}{{ .Suffix }}) UnmarshalJSON(data []byte) error {
