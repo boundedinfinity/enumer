@@ -1,4 +1,4 @@
-module github.com/boundedinfinity/enumeration
+module github.com/boundedinfinity/enumer
 
 go 1.14
 
