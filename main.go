@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/ozgio/strutil"
+	"github.com/boundedinfinity/caser"
 )
 
 type data struct {
@@ -54,7 +54,7 @@ func main() {
 		k := v
 		k = strings.ReplaceAll(k, "-", " ")
 		k = strings.ReplaceAll(k, "_", " ")
-		k = strutil.ToCamelCase(k)
+		k = caser.PhraseToCamel(k)
 		args.Items[k] = v
 	}
 
