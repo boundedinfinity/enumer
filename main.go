@@ -202,7 +202,7 @@ func (t *{{ .Prefix }}{{ .Name }}{{ .Suffix }}) UnmarshalJSON(data []byte) error
         return err
     }
 
-	t = &e
+	*t = e
 
 	return nil
 }
