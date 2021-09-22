@@ -128,7 +128,7 @@ const (
 )
 
 var (
-	{{ .Prefix }}{{ .Name }}{{ .Suffix }}s = []{{ .Prefix }}{{ .Name }}{{ .Suffix }}{
+	{{ .Prefix }}{{ .Name }}{{ .Suffix }}List = []{{ .Prefix }}{{ .Name }}{{ .Suffix }}{
 	{{ range $k, $v := .Items }}
 		{{- $.Name }}_{{ title $k }},
 	{{ end }}
@@ -138,7 +138,7 @@ var (
 func Is{{ .Prefix }}{{ .Name }}{{ .Suffix }}(v string) bool {
 	var f bool
 
-	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}s {
+	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}List {
 		if string(e) == v {
 			f = true
 			break
@@ -153,7 +153,7 @@ func {{ .Prefix }}{{ .Name }}{{ .Suffix }}Parse(v string) ({{ .Prefix }}{{ .Name
 	var f bool
 	n := strings.ToLower(v)
 
-	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}s {
+	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}List {
 		if strings.ToLower(e.String()) == n {
 			o = e
 			f = true
@@ -168,10 +168,20 @@ func {{ .Prefix }}{{ .Name }}{{ .Suffix }}Parse(v string) ({{ .Prefix }}{{ .Name
 	return o, nil
 }
 
+func {{ .Prefix }}{{ .Name }}{{ .Suffix }}ListToStrings(vs []{{ .Prefix }}{{ .Name }}{{ .Suffix }}) ([]string) {
+	var ss []string
+	
+	for _, v := range vs {
+		ss = append(ss, v.String())
+	}
+
+	return ss
+}
+
 func Err{{ .Prefix }}{{ .Name }}{{ .Suffix }}NotFound(v string) error {
 	var ss []string
 
-	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}s {
+	for _, e := range {{ .Prefix }}{{ .Name }}{{ .Suffix }}List {
 		ss = append(ss, string(e))
 	}
 	
