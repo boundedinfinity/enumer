@@ -312,12 +312,23 @@ package {{ .Package }}
 
 import (
 	"fmt"
+	"errors"
 	"encoding/json"
 	"strings"
 )
 
 type {{ .Name }} string
 type {{ .Plural }} []{{ .Name }}
+
+func Slice(es ...{{ .Name }}) {{ .Plural }} {
+	var s {{ .Plural }}
+
+	for _, e := range es {
+		s = append(s, e)
+	}
+	
+	return s
+}
 
 const (
 	{{ range $k, $v := .Items }}
@@ -349,10 +360,12 @@ func (t {{ .Name }}) String() string {
 	return string(t)
 }
 
-func err{{ .Name }}Invalid(vs {{ .Plural }}, v string) error {
+var Err{{ .Name }}Invalid = errors.New("invalid enumeration type")
+
+func Error(vs {{ .Plural }}, v string) error {
 	return fmt.Errorf(
-		"invalid enumeration type '%v', must be one of %v",
-		v, strings.Join(vs.Strings(), ","),
+		"%w '%v', must be one of %v",
+		Err{{ .Name }}Invalid, v, strings.Join(vs.Strings(), ","),
 	)
 }
 
@@ -380,7 +393,7 @@ func (t {{ .Plural }}) Parse(v string) ({{ .Name }}, error) {
 	}
 
 	if !f {
-		return o, err{{ .Name }}Invalid(t, v)
+		return o, Error(t, v)
 	}
 
 	return o, nil
