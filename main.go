@@ -188,9 +188,7 @@ func processPath(args argsData, data *templateData) error {
 	}
 
 	if args.Standalone {
-		data.Filename = "enumeration.go"
-	} else {
-		data.Filename = fmt.Sprintf("%v.enumeration.go", args.Name)
+		data.Filename = fmt.Sprintf("%v.enumer.go", args.Name)
 	}
 
 	data.Path = filepath.Join(data.Dir, data.Filename)
@@ -319,6 +317,8 @@ var standaloneTmpl = `
 {{ .Header }}
 
 package {{ .Package }}
+
+//go:generate go run cmd/main.go -type=int
 
 import (
 	"fmt"
@@ -453,6 +453,9 @@ func (t *{{ .Name }}) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
+
+
 `
 
 var embeddedTmpl = `
