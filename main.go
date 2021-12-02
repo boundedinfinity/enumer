@@ -318,8 +318,6 @@ var standaloneTmpl = `
 
 package {{ .Package }}
 
-//go:generate go run cmd/main.go -type=int
-
 import (
 	"fmt"
 	"errors"
