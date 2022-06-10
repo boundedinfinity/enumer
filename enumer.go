@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
 	"github.com/boundedinfinity/commons/slices"
 )
 
@@ -48,7 +49,7 @@ func errNotInEnumerationf[T V](ts Enum[T], s string) error {
 	return fmt.Errorf("'%v' %w, must be one of %v", s, ErrNotInEnumeration, ss)
 }
 
-func (ts Enum[T])Parse(s string) (T, error) {
+func (ts Enum[T]) Parse(s string) (T, error) {
 	var zero T
 
 	for _, t := range ts {
