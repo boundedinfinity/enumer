@@ -109,9 +109,18 @@ func getInfo(args argsData, data *templateData) error {
 			data.Package = t.Name.Name
 		case *ast.TypeSpec:
 			// fmt.Printf("TypeSpec: %v = %v\n", t.Name, t.Type)
+			tname := fmt.Sprintf("%v", t.Type)
 
-			if fmt.Sprintf("%v", t.Type) != "string" {
-				panic("must be string")
+			switch tname {
+			case "string", "byte", "int":
+				if data.BaseType == "" {
+					data.BaseType = tname
+				} else if data.BaseType != tname {
+					msg := fmt.Sprintf("must be of same type was %v, now %v", data.BaseType, tname)
+					panic(msg)
+				}
+			default:
+				panic("must be one of string,~int,byte")
 			}
 
 			data.Name = t.Name.Name
@@ -151,6 +160,7 @@ type templateData struct {
 	Filename string
 	Path     string
 	Items    []string
+	BaseType string
 	Header   string
 }
 
@@ -236,7 +246,6 @@ import (
 	"encoding/json"
 
 	"github.com/boundedinfinity/commons/slices"
-	"github.com/boundedinfinity/commons/strings"
 )
 
 var (
@@ -247,18 +256,14 @@ var (
 	}
 )
 
-func pred(s string) func({{ .Name }}) bool {
-	return func(v {{ .Name }}) bool {
-		return string(v) == s
-	}
-}
-
 func (t {{ .Name }}) String() string {
 	return string(t)
 }
 
-func Parse(v string) ({{ .Name }}, error) {
-	f, ok := slices.FindFn(All, pred(v))
+func Parse(v {{ .BaseType }}) ({{ .Name }}, error) {
+	f, ok := slices.FindFn(All, func(x {{ .Name }}) bool {
+		return {{ .Name }}(v) == x
+	})
 
 	if !ok {
 		return f, ErrorV(v)
@@ -267,33 +272,33 @@ func Parse(v string) ({{ .Name }}, error) {
 	return f, nil
 }
 
-func Is(s string) bool {
+func Is(s {{ .BaseType }}) bool {
 	return slices.ContainsFn(All, func(v {{ .Name }}) bool {
-		return string(v) == s
+		return {{ .BaseType }}(v) == s
 	})
 }
 
 var ErrInvalid = errors.New("invalid enumeration type")
 
-func ErrorV(v string) error {
+func ErrorV(v {{ .BaseType }}) error {
 	return fmt.Errorf(
 		"%w '%v', must be one of %v",
-		ErrInvalid, v, strings.Join(All, ","),
+		ErrInvalid, v, slices.Join(All, ","),
 	)
 }
 
 func (t {{ .Name }}) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(t))
+	return json.Marshal({{ .BaseType }}(t))
 }
 
 func (t *{{ .Name }}) UnmarshalJSON(data []byte) error {
-	var s string
+	var v {{ .BaseType }}
 
-	if err := json.Unmarshal(data, &s); err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-    e, err := Parse(s)
+    e, err := Parse(v)
 
     if err != nil {
         return err
@@ -305,17 +310,17 @@ func (t *{{ .Name }}) UnmarshalJSON(data []byte) error {
 }
 
 func (t {{ .Name }}) MarshalYAML() (interface{}, error) {
-	return string(t), nil
+	return {{ .BaseType }}(t), nil
 }
 
 func (t *{{ .Name }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
+	var v {{ .BaseType }}
 
-	if err := unmarshal(&s); err != nil {
+	if err := unmarshal(&v); err != nil {
 		return err
 	}
 
-	e, err := Parse(s)
+	e, err := Parse(v)
 
 	if err != nil {
 		return err
