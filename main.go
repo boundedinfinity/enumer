@@ -245,7 +245,7 @@ import (
 	"errors"
 	"encoding/json"
 
-	"github.com/boundedinfinity/commons/slices"
+	"github.com/boundedinfinity/go-commoner/slices"
 )
 
 var (

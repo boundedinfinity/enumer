@@ -11,6 +11,7 @@ require (
 
 require (
 	github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 // indirect
+	github.com/boundedinfinity/go-commoner v1.0.12 // indirect
 	github.com/boundedinfinity/go-trier v1.0.1 // indirect
 	github.com/boundedinfinity/optioner v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
