@@ -2,14 +2,10 @@ github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca h1:nbqTYb
 github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca/go.mod h1:+HdjtmUFg/tXdrQVaaIe1Amak/xgunLRVymFnmNFnP8=
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 h1:kzZXL7PFUy8p+AAnUuWUwE20KL1xi3WsNpfmJd5rY6w=
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7/go.mod h1:KMN60klM/vjr5H+dMU3YHKo1pjeQJvPQ21DqpflFwsI=
-github.com/boundedinfinity/commons v1.0.9 h1:N/DTrhgfpVE5Ns8UjFJSUUwzL/5QFg9KxyXFBgWbTE8=
-github.com/boundedinfinity/commons v1.0.9/go.mod h1:UxkXbk82NXamTm57Ujqc4EBAppmifDaH+T0Z4q/yYqU=
 github.com/boundedinfinity/go-commoner v1.0.12 h1:AJR6I0gEU+UNxf87xR9w/v8ynADhSNo70vG9CBuwJ+k=
 github.com/boundedinfinity/go-commoner v1.0.12/go.mod h1:S3naZhV2uUW5zEuvd3aTyxyfqRkq/nclszroSDuFocU=
 github.com/boundedinfinity/go-trier v1.0.1 h1:38WkKsL9NEoi8hlZy8RyI6xjgS4GLvqr0dXJQ0oYqn4=
 github.com/boundedinfinity/go-trier v1.0.1/go.mod h1:XmkIbcEA+ks9eBmxm7LqgVR+ogWs6lzI026K2v4DDu8=
-github.com/boundedinfinity/optioner v1.0.1 h1:+JQavAt3cuXmYChFX651fk8RNzLg4xiMGKhxUFQztPM=
-github.com/boundedinfinity/optioner v1.0.1/go.mod h1:X0ftWNeI1VOuplpZiEaemuC/NmoJMzlTVvsYMxVykkg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

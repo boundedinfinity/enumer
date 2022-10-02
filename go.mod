@@ -4,16 +4,14 @@ go 1.18
 
 require (
 	github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca
-	github.com/boundedinfinity/commons v1.0.9
+	github.com/boundedinfinity/go-commoner v1.0.12
 	github.com/stretchr/testify v1.7.4
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
 	github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 // indirect
-	github.com/boundedinfinity/go-commoner v1.0.12 // indirect
 	github.com/boundedinfinity/go-trier v1.0.1 // indirect
-	github.com/boundedinfinity/optioner v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
