@@ -10,6 +10,9 @@ clean:
 	rm -f $(makefile_dir)/enum_internal/byte/*.enum.go
 	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
 
+install:
+	go install
+
 generate:
 	go generate ./...
 
