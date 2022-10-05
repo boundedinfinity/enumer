@@ -5,31 +5,34 @@ makefile_dir		:= $(abspath $(shell pwd))
 list:
 	@grep '^[^#[:space:]].*:' Makefile | grep -v ':=' | grep -v '^\.' | sed 's/:.*//g' | sed 's/://g' | sort
 
-clean:
+purge:
 	rm -f $(makefile_dir)/enumer
 	rm -f $(makefile_dir)/enum_internal/byte/*.enum.go
 	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
 
-install:
-	go install
+build: generate
+	go build
 
-generate:
+generate: 
 	go generate ./...
 
-test: clean
+install: generate
+	go install
+
+test: purge
 	go build
 	go generate ./...
 	go test ./...
 
 commit:
 	git add . || true
-	git commit -m "$(m)"
+	git commit -m "$(m)" || true
 	git push origin master
 
 tag:
-	git tag -a $(tag) -m "$(tag)"
-	git push origin $(tag)
+	git tag -fa $(tag) -m "$(tag)"
+	git push -f origin $(tag)
 
-publish: generate
-	make commit m=$(tag)
-	make tag tag=$(tag)
+publish: test
+	make commit m=$(m)
+	make tag tag=$(m)
