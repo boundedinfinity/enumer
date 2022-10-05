@@ -245,7 +245,7 @@ import (
 	"errors"
 	"encoding/json"
 
-	"github.com/boundedinfinity/go-commoner/slices"
+	"github.com/boundedinfinity/go-commoner/slicer"
 )
 
 var (
@@ -261,7 +261,7 @@ func (t {{ .Name }}) String() string {
 }
 
 func Parse(v {{ .BaseType }}) ({{ .Name }}, error) {
-	f, ok := slices.FindFn(All, func(x {{ .Name }}) bool {
+	f, ok := slicer.FindFn(All, func(x {{ .Name }}) bool {
 		return {{ .Name }}(v) == x
 	})
 
@@ -273,7 +273,7 @@ func Parse(v {{ .BaseType }}) ({{ .Name }}, error) {
 }
 
 func Is(s {{ .BaseType }}) bool {
-	return slices.ContainsFn(All, func(v {{ .Name }}) bool {
+	return slicer.ContainsFn(All, func(v {{ .Name }}) bool {
 		return {{ .BaseType }}(v) == s
 	})
 }
@@ -283,7 +283,7 @@ var ErrInvalid = errors.New("invalid enumeration type")
 func ErrorV(v {{ .BaseType }}) error {
 	return fmt.Errorf(
 		"%w '%v', must be one of %v",
-		ErrInvalid, v, slices.Join(All, ","),
+		ErrInvalid, v, slicer.Join(All, ","),
 	)
 }
 

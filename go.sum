@@ -4,6 +4,8 @@ github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 h1
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7/go.mod h1:KMN60klM/vjr5H+dMU3YHKo1pjeQJvPQ21DqpflFwsI=
 github.com/boundedinfinity/go-commoner v1.0.12 h1:AJR6I0gEU+UNxf87xR9w/v8ynADhSNo70vG9CBuwJ+k=
 github.com/boundedinfinity/go-commoner v1.0.12/go.mod h1:S3naZhV2uUW5zEuvd3aTyxyfqRkq/nclszroSDuFocU=
+github.com/boundedinfinity/go-commoner v1.0.15 h1:+GYu+/gKCkj/RFPJfcdbtvv1BEBWDk8zxqx8uOxXBec=
+github.com/boundedinfinity/go-commoner v1.0.15/go.mod h1:NtJk5jQO+YEXMZ9T+vTpQE3tCFTz+8Sr/N+ofQi5FSg=
 github.com/boundedinfinity/go-trier v1.0.1 h1:38WkKsL9NEoi8hlZy8RyI6xjgS4GLvqr0dXJQ0oYqn4=
 github.com/boundedinfinity/go-trier v1.0.1/go.mod h1:XmkIbcEA+ks9eBmxm7LqgVR+ogWs6lzI026K2v4DDu8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
