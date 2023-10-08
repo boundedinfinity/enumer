@@ -18,6 +18,7 @@ import (
 	"text/template"
 
 	"github.com/boundedinfinity/asciibox"
+	"github.com/boundedinfinity/go-commoner/stringer"
 )
 
 const (
@@ -32,6 +33,26 @@ var (
 	}
 )
 
+type argsData struct {
+	Path       string
+	Header     string
+	HeaderFrom string
+	Plural     string
+	SkipFormat bool
+}
+
+type templateData struct {
+	Name       string
+	Package    string
+	Dir        string
+	Filename   string
+	Path       string
+	Items      []string
+	BaseType   string
+	Header     string
+	SkipFormat bool
+}
+
 func main() {
 	var args argsData
 
@@ -43,6 +64,7 @@ func main() {
 	flag.StringVar(&args.Plural, "plural", "", "The plural form of the name. Defaults to <name>s.")
 	flag.StringVar(&args.Header, "header", "", "The header contents.")
 	flag.StringVar(&args.HeaderFrom, "header-from", "", "Path to file containing the header contents.")
+	flag.BoolVar(&args.SkipFormat, "skip-format", false, "Skip source formatting.")
 	flag.Parse()
 
 	if err := processArgs(args, &data); err != nil {
@@ -73,15 +95,16 @@ func processArgs(args argsData, data *templateData) error {
 		return errors.New("input cannot be empty")
 	}
 
-	if filepath.Ext(args.Path) != ".go" {
-		return errors.New("must be a go file")
+	if !stringer.EndsWith(args.Path, ".enum.go") {
+		return errors.New("must be a .enum.go file")
 	}
 
 	data.Path = args.Path
-	data.Path = strings.ReplaceAll(data.Path, ".go", ".enum.go")
+	data.Path = strings.ReplaceAll(data.Path, ".enum.go", ".enum.gen.go")
 
 	data.Dir = filepath.Dir(args.Path)
 	data.Filename = filepath.Base(args.Path)
+	data.SkipFormat = args.SkipFormat
 
 	return nil
 }
@@ -146,24 +169,6 @@ func handleErr(err error) {
 	}
 }
 
-type argsData struct {
-	Path       string
-	Header     string
-	HeaderFrom string
-	Plural     string
-}
-
-type templateData struct {
-	Name     string
-	Package  string
-	Dir      string
-	Filename string
-	Path     string
-	Items    []string
-	BaseType string
-	Header   string
-}
-
 func processWrite(data templateData, bs []byte) error {
 	err := os.MkdirAll(data.Dir, FilePermissions)
 
@@ -218,6 +223,9 @@ func processTemplate(data templateData) ([]byte, error) {
 		"title": func(s string) string {
 			return strings.Title(s)
 		},
+		"lower": func(s string) string {
+			return strings.ToLower(s)
+		},
 	}
 
 	t, err := template.New(data.Filename).Funcs(funcs).Parse(standaloneTmpl)
@@ -232,7 +240,11 @@ func processTemplate(data templateData) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	return format.Source(b.Bytes())
+	if data.SkipFormat {
+		return b.Bytes(), nil
+	} else {
+		return format.Source(b.Bytes())
+	}
 }
 
 var standaloneTmpl = `
@@ -241,93 +253,99 @@ var standaloneTmpl = `
 package {{ .Package }}
 
 import (
+	"database/sql/driver"
 	"fmt"
-	"errors"
-	"encoding/json"
-
+	
+	"github.com/boundedinfinity/enumer"
 	"github.com/boundedinfinity/go-commoner/slicer"
 )
 
-var (
-	All = []{{ .Name }} {
-	{{ range $v := .Items }}
-		{{- title $v }},
-	{{ end }}
-	}
-)
+{{- $name := .Name }}
 
 func (t {{ .Name }}) String() string {
 	return string(t)
 }
 
-func Parse(v {{ .BaseType }}) ({{ .Name }}, error) {
-	f, ok := slicer.FindFn(All, func(x {{ .Name }}) bool {
-		return {{ .Name }}(v) == x
-	})
+func (t {{ .Name }}) All() []{{ .Name }} {
+	return {{ .Name }}Enum.All
+}
+
+func (t {{ .Name }}) MarshalJSON() ([]byte, error) {
+	return enumer.MarshalJSON(t)
+}
+
+func (t *{{ .Name }}) UnmarshalJSON(data []byte) error {
+	return enumer.UnmarshalJSON(data, t, {{ .Name }}Enum.Parse)
+}
+
+func (t {{ .Name }}) MarshalYAML() (interface{}, error) {
+	return enumer.MarshalYAML(t)
+}
+
+func (t *{{ .Name }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	return enumer.UnmarshalYAML(unmarshal, t, {{ .Name }}Enum.Parse)
+}
+
+func (t {{ .Name }}) Value() (driver.Value, error) {
+	return enumer.Value(t)
+}
+
+func (t *{{ .Name }}) Scan(value interface{}) error {
+	return enumer.Scan(value, t, {{ .Name }}Enum.Parse)
+}
+
+var {{ .Name }}Enum = {{ lower .Name }}Enum{}
+
+type {{ lower .Name }}Enum struct {
+	name  string
+	All   []{{ .Name }}
+	Err   error
+{{- range $v := .Items }}
+	{{ title $v }} {{ $name -}}
+{{ end }}
+}
+
+func init() {
+	{{ .Name }}Enum.name = enumer.GetName[{{ .Name }}]()
+	{{ .Name }}Enum.Err = fmt.Errorf("invalid %v", {{ .Name }}Enum.name)
+	
+	{{ range $v := .Items -}}
+		{{- $name }}Enum.{{- title $v }} = {{ $name }}("{{- $v }}")
+	{{ end }}
+
+	{{ .Name }}Enum.All = []{{ .Name }}{
+		{{- range $v := .Items }}
+			{{ $name }}Enum.{{ title $v -}},
+		{{- end }}
+	}
+}
+
+func (t {{ lower .Name }}Enum) newErr(a any, values ...{{ .Name }}) error {
+	return fmt.Errorf(
+		"invalid %w value '%v'. Must be one of %v",
+		t.Err, a, slicer.Join(values, ", "),
+	)
+}
+
+func (t {{ lower .Name }}Enum) ParseFrom(v string, values ...{{ .Name }}) ({{ .Name }}, error) {
+	f, ok := slicer.FindFn(values, enumer.IsEq[string, {{ .Name }}](v))
 
 	if !ok {
-		return f, ErrorV(v)
+		return f, t.newErr(v, values...)
 	}
 
 	return f, nil
 }
 
-func Is(s {{ .BaseType }}) bool {
-	return slicer.ContainsFn(All, func(v {{ .Name }}) bool {
-		return {{ .BaseType }}(v) == s
-	})
+func (t {{ lower .Name }}Enum) Parse(v string) ({{ .Name }}, error) {
+	return t.ParseFrom(v, t.All...)
 }
 
-var ErrInvalid = errors.New("invalid enumeration type")
-
-func ErrorV(v {{ .BaseType }}) error {
-	return fmt.Errorf(
-		"%w '%v', must be one of %v",
-		ErrInvalid, v, slicer.Join(All, ","),
-	)
+func (t {{ lower .Name }}Enum) IsFrom(v string, values ...{{ .Name }}) bool {
+	return slicer.ContainsFn(values, enumer.IsEq[string, {{ .Name }}](v))
 }
 
-func (t {{ .Name }}) MarshalJSON() ([]byte, error) {
-	return json.Marshal({{ .BaseType }}(t))
-}
-
-func (t *{{ .Name }}) UnmarshalJSON(data []byte) error {
-	var v {{ .BaseType }}
-
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-
-    e, err := Parse(v)
-
-    if err != nil {
-        return err
-    }
-
-	*t = e
-
-	return nil
-}
-
-func (t {{ .Name }}) MarshalYAML() (interface{}, error) {
-	return {{ .BaseType }}(t), nil
-}
-
-func (t *{{ .Name }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var v {{ .BaseType }}
-
-	if err := unmarshal(&v); err != nil {
-		return err
-	}
-
-	e, err := Parse(v)
-
-	if err != nil {
-		return err
-	}
-
-	*t = e
-
-	return nil
+func (t {{ lower .Name }}Enum) Is(v string) bool {
+	return t.IsFrom(v, t.All...)
 }
 `

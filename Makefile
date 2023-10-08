@@ -7,20 +7,22 @@ list:
 
 purge:
 	rm -f $(makefile_dir)/enumer
-	rm -f $(makefile_dir)/enum_internal/byte/*.enum.go
-	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
+	rm -f $(makefile_dir)/cmd/enumer
+	rm -f $(makefile_dir)/enum_internal/byte/*.enum.gen.go
+	rm -f $(makefile_dir)/enum_internal/string/*.enum.gen.go
 
-build: generate
-	go build
+build:
+	cd $(makefile_dir)/cmd && go build -o $(makefile_dir)/enumer
+	cd $(makefile_dir)/cmd && go build -o enumer
 
 generate: 
 	go generate ./...
 
-install: generate
-	go install
+install:
+	cd $(makefile_dir)/cmd && go install
 
 test: purge
-	go build
+	@make build
 	go generate ./...
 	go test ./...
 
