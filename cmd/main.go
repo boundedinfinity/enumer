@@ -262,13 +262,17 @@ import (
 
 {{- $name := .Name }}
 
+// /////////////////////////////////////////////////////////////////
+//  {{ .Name }} Stringer implemenation
+// /////////////////////////////////////////////////////////////////
+
 func (t {{ .Name }}) String() string {
 	return string(t)
 }
 
-func (t {{ .Name }}) All() []{{ .Name }} {
-	return {{ .Name }}Enum.All
-}
+// /////////////////////////////////////////////////////////////////
+//  {{ .Name }} JSON marshal/unmarshal implemenation
+// /////////////////////////////////////////////////////////////////
 
 func (t {{ .Name }}) MarshalJSON() ([]byte, error) {
 	return enumer.MarshalJSON(t)
@@ -278,6 +282,10 @@ func (t *{{ .Name }}) UnmarshalJSON(data []byte) error {
 	return enumer.UnmarshalJSON(data, t, {{ .Name }}Enum.Parse)
 }
 
+// /////////////////////////////////////////////////////////////////
+//  {{ .Name }} YAML marshal/unmarshal implemenation
+// /////////////////////////////////////////////////////////////////
+
 func (t {{ .Name }}) MarshalYAML() (interface{}, error) {
 	return enumer.MarshalYAML(t)
 }
@@ -286,6 +294,11 @@ func (t *{{ .Name }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return enumer.UnmarshalYAML(unmarshal, t, {{ .Name }}Enum.Parse)
 }
 
+
+// /////////////////////////////////////////////////////////////////
+//  {{ .Name }} SQL Database marshal/unmarshal implemenation
+// /////////////////////////////////////////////////////////////////
+
 func (t {{ .Name }}) Value() (driver.Value, error) {
 	return enumer.Value(t)
 }
@@ -293,6 +306,12 @@ func (t {{ .Name }}) Value() (driver.Value, error) {
 func (t *{{ .Name }}) Scan(value interface{}) error {
 	return enumer.Scan(value, t, {{ .Name }}Enum.Parse)
 }
+
+// /////////////////////////////////////////////////////////////////
+//
+//  Enumeration
+//
+// /////////////////////////////////////////////////////////////////
 
 var {{ .Name }}Enum = {{ lower .Name }}Enum{}
 
