@@ -294,7 +294,6 @@ func (t *{{ .Name }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return enumer.UnmarshalYAML(unmarshal, t, {{ .Name }}Enum.Parse)
 }
 
-
 // /////////////////////////////////////////////////////////////////
 //  {{ .Name }} SQL Database marshal/unmarshal implemenation
 // /////////////////////////////////////////////////////////////////
