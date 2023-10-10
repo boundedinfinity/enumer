@@ -10,73 +10,73 @@ import (
 )
 
 func Test_Parse(t *testing.T) {
-	actual, err := enum_internal.MyStringEnum.Parse("myString1")
-	expected := enum_internal.MyStringEnum.MyString1
+	actual, err := enum_internal.MyStrings.Parse("MyString1")
+	expected := enum_internal.MyStrings.MyString1
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Parse_Err(t *testing.T) {
-	actual, err := enum_internal.MyStringEnum.Parse("xxxx")
+	actual, err := enum_internal.MyStrings.Parse("xxxx")
 	expected := enum_internal.MyString("")
 
-	assert.ErrorIs(t, err, enum_internal.MyStringEnum.Err)
-	assert.Equal(t, err.Error(), "invalid invalid enum_internal.MyString value 'xxxx'. Must be one of myString1, myString2, myString3")
+	assert.ErrorIs(t, err, enum_internal.MyStrings.Err)
+	assert.Equal(t, err.Error(), "invalid invalid MyString value 'xxxx'. Must be one of MyString1, MyString2, MyString3")
 	assert.Equal(t, expected, actual)
 }
 
 func Test_String(t *testing.T) {
-	actual := enum_internal.MyStringEnum.MyString1.String()
-	expected := "myString1"
+	actual := enum_internal.MyStrings.MyString1.String()
+	expected := "MyString1"
 
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Is(t *testing.T) {
-	assert.Equal(t, false, enum_internal.MyStringEnum.Is("thing1000"))
-	assert.Equal(t, true, enum_internal.MyStringEnum.Is("myString1"))
+	assert.Equal(t, false, enum_internal.MyStrings.Is("thing1000"))
+	assert.Equal(t, true, enum_internal.MyStrings.Is("MyString1"))
 }
 
 func Test_Json_Marshal(t *testing.T) {
-	input := enum_internal.MyStringEnum.MyString1
+	input := enum_internal.MyStrings.MyString1
 	bs, err := json.Marshal(input)
 
 	actual := string(bs)
-	expected := `"myString1"`
+	expected := `"MyString1"`
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Json_Unmarshal(t *testing.T) {
-	input := []byte(`"myString1"`)
+	input := []byte(`"MyString1"`)
 	var actual enum_internal.MyString
 
 	err := json.Unmarshal(input, &actual)
-	expected := enum_internal.MyStringEnum.MyString1
+	expected := enum_internal.MyStrings.MyString1
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Yaml_Marshal(t *testing.T) {
-	input := enum_internal.MyStringEnum.MyString1
+	input := enum_internal.MyStrings.MyString1
 	bs, err := yaml.Marshal(input)
 
 	actual := string(bs)
-	expected := "myString1\n"
+	expected := "MyString1\n"
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Yaml_Unmarshal(t *testing.T) {
-	input := []byte("myString1\n")
+	input := []byte("MyString1\n")
 	var actual enum_internal.MyString
 
 	err := yaml.Unmarshal(input, &actual)
-	expected := enum_internal.MyStringEnum.MyString1
+	expected := enum_internal.MyStrings.MyString1
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)

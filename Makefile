@@ -18,8 +18,8 @@ build:
 generate: 
 	go generate ./...
 
-install:
-	cd $(makefile_dir)/cmd && go install
+install: build
+	cp $(makefile_dir)/cmd/enumer $$GOPATH/bin
 
 test: purge
 	@make build

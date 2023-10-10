@@ -4,8 +4,8 @@ package enum_internal
 
 type MyString string
 
-const (
-	myString1 MyString = ""
-	myString2 MyString = ""
-	myString3 MyString = ""
-)
+type myStrings struct {
+	MyString1 MyString
+	MyString2 MyString
+	MyString3 MyString
+}
