@@ -97,7 +97,7 @@ func processArgs(args argsData, data *templateData) error {
 	}
 
 	if !stringer.EndsWith(args.Path, ".enum.go") {
-		return errors.New("must be a .enum.go file")
+		return fmt.Errorf("%v must be a .enum.go file\n", args.Path)
 	}
 
 	data.Path = args.Path
@@ -271,7 +271,6 @@ import (
 	"fmt"
 	
 	"github.com/boundedinfinity/enumer"
-	"github.com/boundedinfinity/go-commoner/slicer"
 )
 
 {{- $typeName := .TypeName }}
@@ -353,18 +352,27 @@ func (t {{ $structName }}) newErr(a any, values ...{{ $typeName }}) error {
 		"invalid %w value '%v'. Must be one of %v",
 		{{ title $structName }}.Err, 
 		a, 
-		slicer.Join(values, ", "),
+		enumer.Join(values, ", "),
 	)
 }
 
 func (t {{ $structName }}) ParseFrom(v string, values ...{{ $typeName }}) ({{ $typeName }}, error) {
-	f, ok := slicer.FindFn(values, enumer.IsEq[string, {{ $typeName }}](v))
+	var found {{ $typeName }}
+	var ok bool
 
-	if !ok {
-		return f, t.newErr(v, values...)
+	for _, value := range values {
+		if enumer.IsEq[string, {{ $typeName }}](v)(value) {
+			found = value
+			ok = true
+			break
+		}
 	}
 
-	return f, nil
+	if !ok {
+		return found, t.newErr(v, values...)
+	}
+
+	return found, nil
 }
 
 func (t {{ $structName }}) Parse(v string) ({{ $typeName }}, error) {
@@ -372,7 +380,12 @@ func (t {{ $structName }}) Parse(v string) ({{ $typeName }}, error) {
 }
 
 func (t {{ $structName }}) IsFrom(v string, values ...{{ $typeName }}) bool {
-	return slicer.ContainsFn(values, enumer.IsEq[string, {{ $typeName }}](v))
+	for _, value := range values {
+		if enumer.IsEq[string, {{ $typeName }}](v)(value) {
+			return true
+		}
+	}
+	return false
 }
 
 func (t {{ $structName }}) Is(v string) bool {

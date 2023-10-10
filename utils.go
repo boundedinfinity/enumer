@@ -5,19 +5,33 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-
-	"github.com/boundedinfinity/go-commoner/stringer"
+	"strings"
 )
 
 func GetName[E ~string]() string {
 	return reflect.TypeOf(E("")).String()
 }
 
+func Join[A ~string](values []A, sep string) string {
+	var ss []string
+
+	for _, value := range values {
+		ss = append(ss, string(value))
+	}
+
+	return strings.Join(ss, sep)
+}
+
 func IsEq[A ~string, B ~string](a A) func(B) bool {
+	as := string(a)
+	lower := strings.ToLower(as)
+	upper := strings.ToLower(as)
+
 	return func(b B) bool {
-		return string(a) == string(b) ||
-			stringer.ToLower(a) == stringer.ToLower(b) ||
-			stringer.ToUpper(a) == stringer.ToUpper(b)
+		bs := string(b)
+		return as == bs ||
+			lower == strings.ToLower(bs) ||
+			upper == strings.ToUpper(bs)
 	}
 }
 
