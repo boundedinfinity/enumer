@@ -36,5 +36,5 @@ tag:
 	git push -f origin $(tag)
 
 publish: test
-	make commit m=$(m)
-	make tag tag=$(m)
+	make commit m=$(tag)
+	make tag tag=$(tag)
