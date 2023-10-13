@@ -7,22 +7,21 @@ list:
 
 purge:
 	rm -f $(makefile_dir)/enumer
-	rm -f $(makefile_dir)/cmd/enumer
+	rm -f $(makefile_dir)/main
+	rm -f $(makefile_dir)/cmd/enumer/enumer
 	rm -f $(makefile_dir)/enum_internal/byte/*.enum.gen.go
 	rm -f $(makefile_dir)/enum_internal/string/*.enum.gen.go
 
 build:
-	go build -o enumer ./cmd/main.go
+	go build $(makefile_dir)/cmd/enumer
 
 generate: 
 	go generate ./...
 
 install: build
-	cp $(makefile_dir)/cmd/enumer $$GOPATH/bin
+	go install $(makefile_dir)/cmd/enumer
 
-test: purge
-	@make build
-	go generate ./...
+test: purge build generate
 	go test ./...
 
 commit:
