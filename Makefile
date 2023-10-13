@@ -12,8 +12,7 @@ purge:
 	rm -f $(makefile_dir)/enum_internal/string/*.enum.gen.go
 
 build:
-	cd $(makefile_dir)/cmd && go build -o $(makefile_dir)/enumer
-	cd $(makefile_dir)/cmd && go build -o enumer
+	go build -o enumer ./cmd/main.go
 
 generate: 
 	go generate ./...
