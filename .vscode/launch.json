@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "debug",
             "cwd": "${workspaceFolder}/cmd",
-            "program": "${workspaceFolder}/cmd/main.go",
+            "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
                 "-path=${workspaceFolder}/enum_internal/string/string.enum.go",
             ],
@@ -21,7 +21,7 @@
             "request": "launch",
             "mode": "debug",
             "cwd": "${workspaceFolder}/cmd",
-            "program": "${workspaceFolder}/cmd/main.go",
+            "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
                 "-path=${workspaceFolder}/enum_internal/string/string.enum.go",
                 "--skip-format"

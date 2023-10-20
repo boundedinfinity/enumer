@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -48,17 +49,22 @@ type templateData struct {
 	Dir        string
 	Filename   string
 	Path       string
-	Items      []string
+	Variables  []variableField
 	BaseType   string
 	Header     string
 	SkipFormat bool
+}
+
+type variableField struct {
+	Variable string
+	Value    string
 }
 
 func main() {
 	var args argsData
 
 	data := templateData{
-		Items: []string{},
+		Variables: []variableField{},
 	}
 
 	flag.StringVar(&args.Path, "path", "", "The input file used for the enum being generated.")
@@ -111,9 +117,10 @@ func processArgs(args argsData, data *templateData) error {
 }
 
 func getInfo(args argsData, data *templateData) error {
-	src, err := os.ReadFile(args.Path)
+	var err error
+	var src []byte
 
-	if err != nil {
+	if src, err = os.ReadFile(args.Path); err != nil {
 		return err
 	}
 
@@ -124,57 +131,112 @@ func getInfo(args argsData, data *templateData) error {
 		return err
 	}
 
-	type context struct {
-		typeName     string
-		structName   string
-		structFields []string
+	type enumContext struct {
+		typeName   string
+		structName string
+		variables  []variableField
 	}
 
-	m := map[string]*context{}
+	enumCtxMap := map[string]*enumContext{}
 
-	ast.Inspect(parsed, func(x ast.Node) bool {
-		switch t := x.(type) {
+	ast.Inspect(parsed, func(astNode ast.Node) bool {
+		switch typ := astNode.(type) {
 		case *ast.File:
-			data.Package = t.Name.Name
+			data.Package = typ.Name.Name
 		case *ast.TypeSpec:
-			name := t.Name.Name
+			name := typ.Name.Name
 
-			switch t.Type.(type) {
+			switch structTyp := typ.Type.(type) {
 			case *ast.StructType:
-				for _, field := range t.Type.(*ast.StructType).Fields.List {
-					fieldType := types.ExprString(field.Type)
+				for _, astField := range structTyp.Fields.List {
+					fieldType := types.ExprString(astField.Type)
 
-					if c, ok := m[fieldType]; ok {
-						if c.structName == "" {
-							c.structName = name
+					if enumCtx, ok := enumCtxMap[fieldType]; ok {
+						tm, err2 := getStructTagMap(astField)
+
+						if err2 != nil {
+							err = err2
+							return false
 						}
 
-						c.structFields = append(c.structFields, field.Names[0].Name)
+						if enumCtx.structName == "" {
+							enumCtx.structName = name
+						}
+
+						variableField := variableField{
+							Variable: astField.Names[0].Name,
+						}
+
+						if v, ok := tm["enum"]; ok {
+							variableField.Value = v
+						} else {
+							variableField.Value = variableField.Variable
+						}
+
+						enumCtx.variables = append(enumCtx.variables, variableField)
 					}
 				}
 			case ast.Expr:
-				if _, ok := m[name]; !ok {
-					m[name] = &context{typeName: name}
+				if _, ok := enumCtxMap[name]; !ok {
+					enumCtxMap[name] = &enumContext{typeName: name}
 				}
 			}
 		default:
 			if args.Debug {
-				fmt.Printf("skipping %v\n", t)
+				fmt.Printf("skipping %v\n", typ)
 			}
 		}
 
 		return true
 	})
 
-	for _, ctx := range m {
-		if ctx != nil && ctx.structName != "" && len(ctx.structFields) > 0 {
+	if err != nil {
+		return err
+	}
+
+	for _, ctx := range enumCtxMap {
+		if ctx != nil && ctx.structName != "" && len(ctx.variables) > 0 {
 			data.TypeName = ctx.typeName
 			data.StructName = ctx.structName
-			data.Items = append(data.Items, ctx.structFields...)
+			data.Variables = append(data.Variables, ctx.variables...)
 		}
 	}
 
 	return nil
+}
+
+func getStructTagMap(field *ast.Field) (map[string]string, error) {
+	m := map[string]string{}
+
+	if field == nil || field.Tag == nil {
+		return m, nil
+	}
+
+	all, err := strconv.Unquote(field.Tag.Value)
+
+	if err != nil {
+		return m, err
+	}
+
+	tags := strings.Split(all, " ")
+
+	for _, tag := range tags {
+		kv := strings.Split(tag, ":")
+
+		if len(kv) != 2 {
+			return m, fmt.Errorf("invalid tag %v", tag)
+		}
+
+		v, err := strconv.Unquote(kv[1])
+
+		if err != nil {
+			return m, err
+		}
+
+		m[kv[0]] = v
+	}
+
+	return m, nil
 }
 
 func handleErr(err error) {
@@ -332,8 +394,8 @@ var {{ title $structName }} = struct {
 	Values []{{ $typeName }}
 }{
 	{{ $structName }}: {{ $structName }}{
-	{{- range $field := .Items }}
-		{{ $field }}: {{ $typeName -}}("{{- $field -}}"),
+	{{- range $field := .Variables }}
+		{{ $field.Variable }}: {{ $typeName -}}("{{- $field.Value -}}"),
 	{{- end }}
 	},
 	Err: fmt.Errorf("invalid {{ $typeName }}"),
@@ -341,8 +403,8 @@ var {{ title $structName }} = struct {
 
 func init() {
 	{{ title $structName }}.Values = []{{ $typeName -}} {
-	{{- range $field := .Items }}
-		{{ title $structName }}.{{ $field }},
+	{{- range $field := .Variables }}
+		{{ title $structName }}.{{ $field.Variable }},
 	{{- end }}
 	}
 }

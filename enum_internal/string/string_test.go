@@ -10,7 +10,7 @@ import (
 )
 
 func Test_Parse(t *testing.T) {
-	actual, err := enum_internal.MyStrings.Parse("MyString1")
+	actual, err := enum_internal.MyStrings.Parse("my-string-1")
 	expected := enum_internal.MyStrings.MyString1
 
 	assert.Nil(t, err)
@@ -22,20 +22,19 @@ func Test_Parse_Err(t *testing.T) {
 	expected := enum_internal.MyString("")
 
 	assert.ErrorIs(t, err, enum_internal.MyStrings.Err)
-	assert.Equal(t, err.Error(), "invalid invalid MyString value 'xxxx'. Must be one of MyString1, MyString2, MyString3")
+	assert.Equal(t, err.Error(), "invalid invalid MyString value 'xxxx'. Must be one of my-string-1, my-string-2, MyString3")
 	assert.Equal(t, expected, actual)
 }
 
 func Test_String(t *testing.T) {
-	actual := enum_internal.MyStrings.MyString1.String()
-	expected := "MyString1"
-
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, "my-string-1", enum_internal.MyStrings.MyString1.String())
+	assert.Equal(t, "my-string-2", enum_internal.MyStrings.MyString2.String())
+	assert.Equal(t, "MyString3", enum_internal.MyStrings.MyString3.String())
 }
 
 func Test_Is(t *testing.T) {
 	assert.Equal(t, false, enum_internal.MyStrings.Is("thing1000"))
-	assert.Equal(t, true, enum_internal.MyStrings.Is("MyString1"))
+	assert.Equal(t, true, enum_internal.MyStrings.Is("my-string-1"))
 }
 
 func Test_Json_Marshal(t *testing.T) {
@@ -43,14 +42,14 @@ func Test_Json_Marshal(t *testing.T) {
 	bs, err := json.Marshal(input)
 
 	actual := string(bs)
-	expected := `"MyString1"`
+	expected := `"my-string-1"`
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Json_Unmarshal(t *testing.T) {
-	input := []byte(`"MyString1"`)
+	input := []byte(`"my-string-1"`)
 	var actual enum_internal.MyString
 
 	err := json.Unmarshal(input, &actual)
@@ -65,14 +64,14 @@ func Test_Yaml_Marshal(t *testing.T) {
 	bs, err := yaml.Marshal(input)
 
 	actual := string(bs)
-	expected := "MyString1\n"
+	expected := "my-string-1\n"
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_Yaml_Unmarshal(t *testing.T) {
-	input := []byte("MyString1\n")
+	input := []byte("my-string-1\n")
 	var actual enum_internal.MyString
 
 	err := yaml.Unmarshal(input, &actual)

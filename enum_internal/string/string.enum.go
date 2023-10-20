@@ -5,7 +5,7 @@ package enum_internal
 type MyString string
 
 type myStrings struct {
-	MyString1 MyString
-	MyString2 MyString
+	MyString1 MyString `json:"my-string-1" enum:"my-string-1"`
+	MyString2 MyString `enum:"my-string-2"`
 	MyString3 MyString
 }
