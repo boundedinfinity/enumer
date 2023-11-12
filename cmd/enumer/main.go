@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -20,11 +21,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+//go:embed enum.schema.json
+var jsonSchemaContent string
+
+//go:embed settings.json
+var vscodeSettingsContext string
+
 const (
 	FilePermissions = 0755
 )
 
 var (
+	jsonSchemaName     = "enum.schema.json"
+	vscodeSettingsName = "settings.json"
+
 	Header = []string{
 		"===== DO NOT EDIT =====",
 		"Manual changes will be overwritten.",
@@ -56,6 +66,7 @@ type argsData struct {
 	InputPath  string
 	SkipFormat bool
 	Debug      bool
+	VsCode     string
 }
 
 func handleErr(err error) {
@@ -66,30 +77,81 @@ func handleErr(err error) {
 }
 
 func main() {
-	var enum enumData
+	var args argsData
 
-	if err := processArgs(&enum); err != nil {
+	if err := processArgs(&args); err != nil {
 		handleErr(err)
 	}
 
-	bs, err := processTemplate(enum)
+	if args.VsCode != "" {
+		if err := processJsonSchema(args); err != nil {
+			handleErr(err)
+		}
+	} else {
+		var enum enumData
 
-	if err != nil {
-		handleErr(err)
-	}
+		if err := processEnum(args, &enum); err != nil {
+			handleErr(err)
+		}
 
-	if err := processWrite(enum, bs); err != nil {
-		handleErr(err)
+		bs, err := processTemplate(enum)
+
+		if err != nil {
+			handleErr(err)
+		}
+
+		if err := processWrite(enum, bs); err != nil {
+			handleErr(err)
+		}
 	}
 }
 
-func processArgs(enum *enumData) error {
-	var args argsData
+func processJsonSchema(args argsData) error {
+	projectSettingsDir := pather.Join(args.VsCode, ".vscode")
 
+	if err := pather.DirEnsure(projectSettingsDir); err != nil {
+		return err
+	}
+
+	projectSettingsPath := pather.Join(projectSettingsDir, vscodeSettingsName)
+
+	if pather.PathExists(projectSettingsPath) {
+		name := fmt.Sprintf("enumer-schema-%v", vscodeSettingsName)
+		projectSettingsPath = pather.Join(projectSettingsDir, name)
+
+		if err := os.WriteFile(projectSettingsPath, []byte(vscodeSettingsContext), FilePermissions); err != nil {
+			return err
+		}
+
+		fmt.Printf("Add the contents of the %v file to your %v file.",
+			name,
+			vscodeSettingsName,
+		)
+	} else {
+		if err := os.WriteFile(projectSettingsPath, []byte(vscodeSettingsContext), FilePermissions); err != nil {
+			return err
+		}
+	}
+
+	projectEnumsPath := pather.Join(projectSettingsDir, jsonSchemaName)
+
+	if err := os.WriteFile(projectEnumsPath, []byte(jsonSchemaContent), FilePermissions); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processArgs(args *argsData) error {
 	flag.StringVar(&args.InputPath, "config", "", "The input file used for the enum being generated.")
 	flag.BoolVar(&args.SkipFormat, "skip-format", false, "Skip source formatting.")
 	flag.BoolVar(&args.Debug, "debug", false, "Enabled debugging.")
+	flag.StringVar(&args.VsCode, "vscode", "", "Path to project to configure the Visual Studio Code JSON Schema file.")
 	flag.Parse()
+
+	if args.VsCode != "" {
+		return nil
+	}
 
 	if args.InputPath == "" {
 		return errors.New("Missing config path.  The input file used for the enum being generated.")
@@ -103,6 +165,10 @@ func processArgs(enum *enumData) error {
 		return fmt.Errorf("Invalid config path %v: %w", args.InputPath, err)
 	}
 
+	return nil
+}
+
+func processEnum(args argsData, enum *enumData) error {
 	if bs, err := os.ReadFile(args.InputPath); err == nil {
 		if err := yaml.Unmarshal(bs, &enum); err != nil {
 			return fmt.Errorf("Can't parse config path %v : %w.", args.InputPath, err)

@@ -9,6 +9,7 @@ list:
 purge:
 	rm -f $(makefile_dir)/enumer
 	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
+	rm -f $(makefile_dir)/enum_internal/vscode/.vscode
 
 build:
 	go build $(makefile_dir)/cmd/enumer

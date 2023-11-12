@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "cwd": "${workspaceFolder}/cmd",
+            "cwd": "${workspaceFolder}",
             "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
                 "-config=${workspaceFolder}/enum_internal/string/my-string.enum.yaml",
@@ -20,11 +20,22 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "cwd": "${workspaceFolder}/cmd",
+            "cwd": "${workspaceFolder}",
             "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
                 "-config=${workspaceFolder}/enum_internal/string/my-string.enum.yaml",
                 "--skip-format"
+            ],
+        },
+        {
+            "name": "cmd/main (vscode)", 
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "cwd": "${workspaceFolder}/cmd/enumer",
+            "program": "${workspaceFolder}/cmd/enumer/main.go",
+            "args": [
+                "-vscode=${workspaceFolder}/enum_internal/vscode"
             ],
         }
     ]

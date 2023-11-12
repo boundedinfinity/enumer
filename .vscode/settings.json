@@ -1,13 +1,13 @@
 {
     "yaml.schemas": {
-        "./enum.schema.json": [
+        "./cmd/enumer/enum.schema.json": [
             "**/*.enum.yaml"
         ]
     },
     "json.schemas": [
         {
             "fileMatch": ["**/*.enum.yaml"],
-            "url": "./enum.schema.json"
+            "url": "./cmd/enumer/enum.schema.json"
         }
     ]
 }
