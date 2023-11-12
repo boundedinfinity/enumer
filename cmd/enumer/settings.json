@@ -1,13 +1,13 @@
 {
     "yaml.schemas": {
-        "enum.schema.json": [
+        "./.vscode/enum.schema.json": [
             "**/*.enum.yaml"
         ]
     },
     "json.schemas": [
         {
             "fileMatch": ["**/*.enum.json"],
-            "url": "enum.schema.json"
+            "url": "./.vscode/enum.schema.json"
         }
     ]
 }

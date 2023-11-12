@@ -1,6 +1,6 @@
 # type: MyString
 package: enum_internal
-skip-format: true
+# skip-format: true
 values:
     -   name: MyString1
         serialized: my-string-1
