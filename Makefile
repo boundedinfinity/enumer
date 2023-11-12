@@ -9,7 +9,7 @@ list:
 purge:
 	rm -f $(makefile_dir)/enumer
 	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
-	rm -f $(makefile_dir)/enum_internal/vscode/.vscode
+	rm -rf $(makefile_dir)/enum_internal/vscode/.vscode/
 
 build:
 	go build $(makefile_dir)/cmd/enumer
@@ -33,5 +33,5 @@ tag:
 	git push -f origin $(tag)
 
 publish: test
-	make commit m=$(m)
+	make push m=$(m)
 	make tag tag=$(m)
