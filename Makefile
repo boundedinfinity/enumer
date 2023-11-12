@@ -1,4 +1,5 @@
-makefile_dir		:= $(abspath $(shell pwd))
+makefile_dir	:= $(abspath $(shell pwd))
+m				?= "updates"
 
 .PHONY: list bootstrap init build
 
@@ -7,10 +8,7 @@ list:
 
 purge:
 	rm -f $(makefile_dir)/enumer
-	rm -f $(makefile_dir)/main
-	rm -f $(makefile_dir)/cmd/enumer/enumer
-	rm -f $(makefile_dir)/enum_internal/byte/*.enum.gen.go
-	rm -f $(makefile_dir)/enum_internal/string/*.enum.gen.go
+	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
 
 build:
 	go build $(makefile_dir)/cmd/enumer
@@ -24,7 +22,7 @@ install: build
 test: purge build generate
 	go test ./...
 
-commit:
+push:
 	git add . || true
 	git commit -m "$(m)" || true
 	git push origin master

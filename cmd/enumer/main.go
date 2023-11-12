@@ -1,25 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"flag"
 	"fmt"
-	"go/ast"
 	"go/format"
-	"go/parser"
-	"go/token"
-	"go/types"
-	"log"
 	"os"
-	"path/filepath"
-	"strconv"
+	"path"
 	"strings"
 	"text/template"
 
 	"github.com/boundedinfinity/asciibox"
-	"github.com/boundedinfinity/go-commoner/stringer"
+	"github.com/boundedinfinity/go-commoner/idiomatic/caser"
+	"github.com/boundedinfinity/go-commoner/idiomatic/extentioner"
+	"github.com/boundedinfinity/go-commoner/idiomatic/pather"
+	"github.com/boundedinfinity/go-commoner/idiomatic/stringer"
+	"github.com/gertd/go-pluralize"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -34,267 +32,179 @@ var (
 	}
 )
 
+type enumData struct {
+	Type        string      `json:"type" yaml:"type"`
+	Struct      string      `json:"struct" yaml:"struct"`
+	Package     string      `json:"package" yaml:"package"`
+	InputPath   string      `json:"input-path" yaml:"input-path"`
+	OutputPath  string      `json:"output-path" yaml:"output-path"`
+	Desc        string      `json:"desc" yaml:"desc"`
+	Header      string      `json:"header" yaml:"header"`
+	HeaderFrom  string      `json:"header-from" yaml:"header-from"`
+	HeaderLines []string    `json:"header-lines" yaml:"header-lines"`
+	SkipFormat  bool        `json:"skip-format" yaml:"skip-format"`
+	Debug       bool        `json:"debug" yaml:"debug"`
+	Values      []enumvalue `json:"values" yaml:"values"`
+}
+
+type enumvalue struct {
+	Name       string `json:"name" yaml:"name"`
+	Serialized string `json:"serialized" yaml:"serialized"`
+}
+
 type argsData struct {
-	Path       string
-	Header     string
-	HeaderFrom string
+	InputPath  string
 	SkipFormat bool
 	Debug      bool
 }
 
-type templateData struct {
-	TypeName   string
-	StructName string
-	Package    string
-	Dir        string
-	Filename   string
-	Path       string
-	Variables  []variableField
-	BaseType   string
-	Header     string
-	SkipFormat bool
-}
-
-type variableField struct {
-	Variable string
-	Value    string
+func handleErr(err error) {
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 }
 
 func main() {
-	var args argsData
+	var enum enumData
 
-	data := templateData{
-		Variables: []variableField{},
+	if err := processArgs(&enum); err != nil {
+		handleErr(err)
 	}
 
-	flag.StringVar(&args.Path, "path", "", "The input file used for the enum being generated.")
-	flag.StringVar(&args.Header, "header", "", "The header contents.")
-	flag.StringVar(&args.HeaderFrom, "header-from", "", "Path to file containing the header contents.")
+	bs, err := processTemplate(enum)
+
+	if err != nil {
+		handleErr(err)
+	}
+
+	if err := processWrite(enum, bs); err != nil {
+		handleErr(err)
+	}
+}
+
+func processArgs(enum *enumData) error {
+	var args argsData
+
+	flag.StringVar(&args.InputPath, "config", "", "The input file used for the enum being generated.")
 	flag.BoolVar(&args.SkipFormat, "skip-format", false, "Skip source formatting.")
 	flag.BoolVar(&args.Debug, "debug", false, "Enabled debugging.")
 	flag.Parse()
 
-	if err := processArgs(args, &data); err != nil {
-		handleErr(err)
+	if args.InputPath == "" {
+		return errors.New("Missing config path.  The input file used for the enum being generated.")
 	}
 
-	if err := getInfo(args, &data); err != nil {
-		handleErr(err)
+	if !stringer.EndsWith(args.InputPath, ".enum.yaml") {
+		return fmt.Errorf("%v must be a .enum.yaml file\n", args.InputPath)
 	}
 
-	if err := processHeader(args, &data); err != nil {
-		handleErr(err)
+	if _, err := os.Stat(args.InputPath); err != nil {
+		return fmt.Errorf("Invalid config path %v: %w", args.InputPath, err)
 	}
 
-	bs, err := processTemplate(data)
-
-	if err != nil {
-		handleErr(err)
-	}
-
-	if err := processWrite(data, bs); err != nil {
-		handleErr(err)
-	}
-}
-
-func processArgs(args argsData, data *templateData) error {
-	if args.Path == "" {
-		return errors.New("input cannot be empty")
-	}
-
-	if !stringer.EndsWith(args.Path, ".enum.go") {
-		return fmt.Errorf("%v must be a .enum.go file\n", args.Path)
-	}
-
-	data.Path = args.Path
-	data.Path = strings.ReplaceAll(data.Path, ".enum.go", ".enum.gen.go")
-
-	data.Dir = filepath.Dir(args.Path)
-	data.Filename = filepath.Base(args.Path)
-	data.SkipFormat = args.SkipFormat
-
-	return nil
-}
-
-func getInfo(args argsData, data *templateData) error {
-	var err error
-	var src []byte
-
-	if src, err = os.ReadFile(args.Path); err != nil {
-		return err
-	}
-
-	fset := token.NewFileSet()
-	parsed, err := parser.ParseFile(fset, data.Path, src, parser.ParseComments)
-
-	if err != nil {
-		return err
-	}
-
-	type enumContext struct {
-		typeName   string
-		structName string
-		variables  []variableField
-	}
-
-	enumCtxMap := map[string]*enumContext{}
-
-	ast.Inspect(parsed, func(astNode ast.Node) bool {
-		switch typ := astNode.(type) {
-		case *ast.File:
-			data.Package = typ.Name.Name
-		case *ast.TypeSpec:
-			name := typ.Name.Name
-
-			switch structTyp := typ.Type.(type) {
-			case *ast.StructType:
-				for _, astField := range structTyp.Fields.List {
-					fieldType := types.ExprString(astField.Type)
-
-					if enumCtx, ok := enumCtxMap[fieldType]; ok {
-						tm, err2 := getStructTagMap(astField)
-
-						if err2 != nil {
-							err = err2
-							return false
-						}
-
-						if enumCtx.structName == "" {
-							enumCtx.structName = name
-						}
-
-						variableField := variableField{
-							Variable: astField.Names[0].Name,
-						}
-
-						if v, ok := tm["enum"]; ok {
-							variableField.Value = v
-						} else {
-							variableField.Value = variableField.Variable
-						}
-
-						enumCtx.variables = append(enumCtx.variables, variableField)
-					}
-				}
-			case ast.Expr:
-				if _, ok := enumCtxMap[name]; !ok {
-					enumCtxMap[name] = &enumContext{typeName: name}
-				}
-			}
-		default:
-			if args.Debug {
-				fmt.Printf("skipping %v\n", typ)
-			}
-		}
-
-		return true
-	})
-
-	if err != nil {
-		return err
-	}
-
-	for _, ctx := range enumCtxMap {
-		if ctx != nil && ctx.structName != "" && len(ctx.variables) > 0 {
-			data.TypeName = ctx.typeName
-			data.StructName = ctx.structName
-			data.Variables = append(data.Variables, ctx.variables...)
-		}
-	}
-
-	return nil
-}
-
-func getStructTagMap(field *ast.Field) (map[string]string, error) {
-	m := map[string]string{}
-
-	if field == nil || field.Tag == nil {
-		return m, nil
-	}
-
-	all, err := strconv.Unquote(field.Tag.Value)
-
-	if err != nil {
-		return m, err
-	}
-
-	tags := strings.Split(all, " ")
-
-	for _, tag := range tags {
-		kv := strings.Split(tag, ":")
-
-		if len(kv) != 2 {
-			return m, fmt.Errorf("invalid tag %v", tag)
-		}
-
-		v, err := strconv.Unquote(kv[1])
-
-		if err != nil {
-			return m, err
-		}
-
-		m[kv[0]] = v
-	}
-
-	return m, nil
-}
-
-func handleErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func processWrite(data templateData, bs []byte) error {
-	err := os.MkdirAll(data.Dir, FilePermissions)
-
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(data.Path, bs, FilePermissions); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func processHeader(args argsData, data *templateData) error {
-	var headerContent []string
-
-	if args.Header != "" {
-		headerContent = []string{args.Header}
-	} else if args.HeaderFrom != "" {
-		file, err := os.Open(args.HeaderFrom)
-
-		if err != nil {
-
-			return err
-		}
-
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		headerContent = append(headerContent, scanner.Text())
-
-		if err := scanner.Err(); err != nil {
-			return err
+	if bs, err := os.ReadFile(args.InputPath); err == nil {
+		if err := yaml.Unmarshal(bs, &enum); err != nil {
+			return fmt.Errorf("Can't parse config path %v : %w.", args.InputPath, err)
 		}
 	} else {
-		headerContent = Header
+		return fmt.Errorf("Can't load config path %v : %w.", args.InputPath, err)
 	}
 
-	data.Header = asciibox.Box(
-		headerContent,
-		asciibox.BoxOptions{
-			Alignment: asciibox.Alignment_Left,
-		},
+	if args.SkipFormat {
+		enum.SkipFormat = args.SkipFormat
+	}
+
+	if args.Debug {
+		enum.Debug = args.Debug
+	}
+
+	enum.InputPath = args.InputPath
+
+	if enum.OutputPath == "" {
+		enum.OutputPath = extentioner.Swap(enum.InputPath, ".yaml", ".go")
+	}
+
+	if enum.Package == "" {
+		enum.Package = enum.OutputPath
+		enum.Package = pather.Dir(enum.Package)
+		enum.Package = pather.Base(enum.Package)
+		enum.Package = stringer.ReplaceInList(enum.Package, []string{"-", " "}, "_")
+	}
+
+	if enum.Type == "" {
+		enum.Type = enum.OutputPath
+		enum.Type = pather.Base(enum.Type)
+		enum.Type = extentioner.Strip(enum.Type)
+		enum.Type = extentioner.Strip(enum.Type)
+		enum.Type = stringer.ReplaceInList(enum.Type, []string{"-"}, " ")
+		enum.Type = caser.PhraseToPascal(enum.Type)
+	}
+
+	if enum.Struct == "" {
+		enum.Struct = enum.Type
+		enum.Struct = pluralize.NewClient().Plural(enum.Struct)
+	}
+
+	for i := 0; i < len(enum.Values); i++ {
+		value := enum.Values[i]
+
+		if value.Name == "" {
+			return fmt.Errorf("Invalid values[%v] name", i)
+		}
+
+		if value.Serialized == "" {
+			value.Serialized = value.Name
+		}
+
+		enum.Values[i] = value
+	}
+
+	if enum.Header == "" && enum.HeaderFrom == "" {
+		enum.HeaderLines = Header
+	}
+
+	if enum.Header != "" {
+		enum.HeaderLines = stringer.Split(enum.Header, "\n")
+	}
+
+	if enum.HeaderFrom != "" {
+		if _, err := os.Stat(enum.HeaderFrom); err != nil {
+			return fmt.Errorf("Invalid header from path %v: %w", enum.HeaderFrom, err)
+		}
+
+		if bs, err := os.ReadFile(args.InputPath); err != nil {
+			return fmt.Errorf("Can't read header from path %v: %w", enum.HeaderFrom, err)
+		} else {
+			header := string(bs)
+			enum.HeaderLines = stringer.Split(header, "\n")
+		}
+	}
+
+	enum.Header = asciibox.Box(
+		enum.HeaderLines,
+		asciibox.BoxOptions{Alignment: asciibox.Alignment_Left},
 	)
 
 	return nil
 }
 
-func processTemplate(data templateData) ([]byte, error) {
+func processWrite(enum enumData, bs []byte) error {
+	dir := path.Dir(enum.OutputPath)
+	err := os.MkdirAll(dir, FilePermissions)
+
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(enum.OutputPath, bs, FilePermissions); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processTemplate(enum enumData) ([]byte, error) {
 	funcs := template.FuncMap{
 		"title": func(s string) string {
 			return strings.Title(s)
@@ -302,9 +212,13 @@ func processTemplate(data templateData) ([]byte, error) {
 		"lower": func(s string) string {
 			return strings.ToLower(s)
 		},
+		"lowerFirst": func(s string) string {
+			return stringer.ToLowerFirst(s)
+		},
 	}
 
-	t, err := template.New(data.Filename).Funcs(funcs).Parse(standaloneTmpl)
+	filename := path.Base(enum.OutputPath)
+	t, err := template.New(filename).Funcs(funcs).Parse(standaloneTmpl)
 
 	if err != nil {
 		return []byte{}, nil
@@ -312,11 +226,11 @@ func processTemplate(data templateData) ([]byte, error) {
 
 	var b bytes.Buffer
 
-	if err := t.Execute(&b, data); err != nil {
+	if err := t.Execute(&b, enum); err != nil {
 		return []byte{}, err
 	}
 
-	if data.SkipFormat {
+	if enum.SkipFormat {
 		return b.Bytes(), nil
 	} else {
 		return format.Source(b.Bytes())
@@ -335,8 +249,10 @@ import (
 	"github.com/boundedinfinity/enumer"
 )
 
-{{- $typeName := .TypeName }}
-{{- $structName := .StructName }}
+{{- $typeName := .Type }}
+{{- $structName := .Struct }}
+
+type {{ $typeName }} string
 
 // /////////////////////////////////////////////////////////////////
 //  {{ $typeName }} Stringer implemenation
@@ -388,28 +304,30 @@ func (t *{{ $typeName }}) Scan(value interface{}) error {
 //
 // /////////////////////////////////////////////////////////////////
 
-var {{ title $structName }} = struct {
-	{{ $structName }}
-	Err error
-	Values []{{ $typeName }}
-}{
-	{{ $structName }}: {{ $structName }}{
-	{{- range $field := .Variables }}
-		{{ $field.Variable }}: {{ $typeName -}}("{{- $field.Value -}}"),
-	{{- end }}
-	},
+type {{ lowerFirst $structName }} struct {
+{{- range $field := .Values }}
+    {{ $field.Name }}  {{ $typeName -}}
+{{- end }}
+    Values []{{ $typeName }}
+    Err error
+}
+
+var {{ $structName }} = {{ lowerFirst $structName }}{	
+{{- range $field := .Values }}
+    {{ $field.Name }}: {{ $typeName -}}("{{- $field.Serialized -}}"),
+{{- end }}
 	Err: fmt.Errorf("invalid {{ $typeName }}"),
 }
 
 func init() {
 	{{ title $structName }}.Values = []{{ $typeName -}} {
-	{{- range $field := .Variables }}
-		{{ title $structName }}.{{ $field.Variable }},
+	{{- range $field := .Values }}
+		{{ title $structName }}.{{ $field.Name }},
 	{{- end }}
 	}
 }
 
-func (t {{ $structName }}) newErr(a any, values ...{{ $typeName }}) error {
+func (t {{ lowerFirst $structName }}) newErr(a any, values ...{{ $typeName }}) error {
 	return fmt.Errorf(
 		"invalid %w value '%v'. Must be one of %v",
 		{{ title $structName }}.Err, 
@@ -418,7 +336,7 @@ func (t {{ $structName }}) newErr(a any, values ...{{ $typeName }}) error {
 	)
 }
 
-func (t {{ $structName }}) ParseFrom(v string, values ...{{ $typeName }}) ({{ $typeName }}, error) {
+func (t {{ lowerFirst $structName }}) ParseFrom(v string, values ...{{ $typeName }}) ({{ $typeName }}, error) {
 	var found {{ $typeName }}
 	var ok bool
 
@@ -437,11 +355,11 @@ func (t {{ $structName }}) ParseFrom(v string, values ...{{ $typeName }}) ({{ $t
 	return found, nil
 }
 
-func (t {{ $structName }}) Parse(v string) ({{ $typeName }}, error) {
+func (t {{ lowerFirst $structName }}) Parse(v string) ({{ $typeName }}, error) {
 	return t.ParseFrom(v, {{ title $structName }}.Values...)
 }
 
-func (t {{ $structName }}) IsFrom(v string, values ...{{ $typeName }}) bool {
+func (t {{ lowerFirst $structName }}) IsFrom(v string, values ...{{ $typeName }}) bool {
 	for _, value := range values {
 		if enumer.IsEq[string, {{ $typeName }}](v)(value) {
 			return true
@@ -450,7 +368,7 @@ func (t {{ $structName }}) IsFrom(v string, values ...{{ $typeName }}) bool {
 	return false
 }
 
-func (t {{ $structName }}) Is(v string) bool {
+func (t {{ lowerFirst $structName }}) Is(v string) bool {
 	return t.IsFrom(v, {{ title $structName }}.Values...)
 }
 `

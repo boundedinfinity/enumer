@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}/cmd",
             "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
-                "-path=${workspaceFolder}/enum_internal/string/string.enum.go",
+                "-config=${workspaceFolder}/enum_internal/string/my-string.enum.yaml",
             ],
         },
         {
@@ -23,7 +23,7 @@
             "cwd": "${workspaceFolder}/cmd",
             "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
-                "-path=${workspaceFolder}/enum_internal/string/string.enum.go",
+                "-config=${workspaceFolder}/enum_internal/string/my-string.enum.yaml",
                 "--skip-format"
             ],
         }

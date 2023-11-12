@@ -1,0 +1,9 @@
+# type: MyString
+package: enum_internal
+skip-format: true
+values:
+    -   name: MyString1
+        serialized: my-string-1
+    -   name: MyString2
+        serialized: my-string-2
+    -   name: MyString3
