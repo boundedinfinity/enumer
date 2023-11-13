@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca
-	github.com/boundedinfinity/go-commoner v1.0.25
+	github.com/boundedinfinity/go-commoner v1.0.28
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/stretchr/testify v1.7.4
 	gopkg.in/yaml.v2 v2.4.0

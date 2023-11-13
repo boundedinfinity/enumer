@@ -2,8 +2,8 @@ github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca h1:nbqTYb
 github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca/go.mod h1:+HdjtmUFg/tXdrQVaaIe1Amak/xgunLRVymFnmNFnP8=
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 h1:kzZXL7PFUy8p+AAnUuWUwE20KL1xi3WsNpfmJd5rY6w=
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7/go.mod h1:KMN60klM/vjr5H+dMU3YHKo1pjeQJvPQ21DqpflFwsI=
-github.com/boundedinfinity/go-commoner v1.0.25 h1:1kDIAO5DZs94AM8pjQgNterPEhSoF/VhGSHgAT4Yf/o=
-github.com/boundedinfinity/go-commoner v1.0.25/go.mod h1:XHihfLWUUkJ6vBmkIjQ8/iQCpS2ts5U+pe9J1orB7gY=
+github.com/boundedinfinity/go-commoner v1.0.28 h1:Niiwcf12I10PzKAXvWdgM+TB7R2jrEEvd+kic2hFYHU=
+github.com/boundedinfinity/go-commoner v1.0.28/go.mod h1:XHihfLWUUkJ6vBmkIjQ8/iQCpS2ts5U+pe9J1orB7gY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

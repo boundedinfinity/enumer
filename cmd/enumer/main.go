@@ -9,6 +9,7 @@ import (
 	"go/format"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -55,6 +56,7 @@ type enumData struct {
 	SkipFormat  bool        `json:"skip-format" yaml:"skip-format"`
 	Debug       bool        `json:"debug" yaml:"debug"`
 	Values      []enumvalue `json:"values" yaml:"values"`
+	Serialize   string      `json:"serialize" yaml:"serialize"`
 }
 
 type enumvalue struct {
@@ -67,6 +69,7 @@ type argsData struct {
 	SkipFormat bool
 	Debug      bool
 	VsCode     string
+	Serialize  string
 }
 
 func handleErr(err error) {
@@ -157,6 +160,14 @@ func processArgs(args *argsData) error {
 		return errors.New("Missing config path.  The input file used for the enum being generated.")
 	}
 
+	if !path.IsAbs(args.InputPath) {
+		if absPath, err := filepath.Abs(args.InputPath); err != nil {
+			return err
+		} else {
+			args.InputPath = absPath
+		}
+	}
+
 	if !stringer.EndsWith(args.InputPath, ".enum.yaml") {
 		return fmt.Errorf("%v must be a .enum.yaml file\n", args.InputPath)
 	}
@@ -212,6 +223,16 @@ func processEnum(args argsData, enum *enumData) error {
 		enum.Struct = pluralize.NewClient().Plural(enum.Struct)
 	}
 
+	var converter func(string) string
+
+	if enum.Serialize != "" {
+		if c, err := caser.Converter[string](enum.Serialize); err != nil {
+			return err
+		} else {
+			converter = c
+		}
+	}
+
 	for i := 0; i < len(enum.Values); i++ {
 		value := enum.Values[i]
 
@@ -220,7 +241,11 @@ func processEnum(args argsData, enum *enumData) error {
 		}
 
 		if value.Serialized == "" {
-			value.Serialized = value.Name
+			if converter != nil {
+				value.Serialized = converter(value.Name)
+			} else {
+				value.Serialized = value.Name
+			}
 		}
 
 		enum.Values[i] = value

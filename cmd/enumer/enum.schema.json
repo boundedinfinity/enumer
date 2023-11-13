@@ -2,6 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "title": "Bounded Infinity enumeration tool",
     "type": "object",
+    "version": "1.0.17",
     "properties": {
         "type": {
             "type": "string"
@@ -19,6 +20,9 @@
             "type": "string"
         },
         "header-from": {
+            "type": "string"
+        },
+        "serialize": {
             "type": "string"
         },
         "skip-format": {

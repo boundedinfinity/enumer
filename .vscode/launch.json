@@ -5,25 +5,36 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "cmd/main (with formatting)", 
+            "name": "cmd/main caser (with formatting)", 
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/enum_internal/caser",
             "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
-                "-config=${workspaceFolder}/enum_internal/string/my-string.enum.yaml",
+                "-config=./case-type.enum.yaml",
             ],
         },
         {
-            "name": "cmd/main (without formatting)", 
+            "name": "cmd/main string (with formatting)", 
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/enum_internal/string",
             "program": "${workspaceFolder}/cmd/enumer/main.go",
             "args": [
-                "-config=${workspaceFolder}/enum_internal/string/my-string.enum.yaml",
+                "-config=./my-string.enum.yaml",
+            ],
+        },
+        {
+            "name": "cmd/main string (without formatting)", 
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "cwd": "${workspaceFolder}/enum_internal/string",
+            "program": "${workspaceFolder}/cmd/enumer/main.go",
+            "args": [
+                "-config=./my-string.enum.yaml",
                 "--skip-format"
             ],
         },
