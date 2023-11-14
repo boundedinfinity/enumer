@@ -8,8 +8,8 @@ list:
 
 purge:
 	rm -f $(makefile_dir)/enumer
-	rm -f $(makefile_dir)/enum_internal/string/*.enum.go
 	rm -rf $(makefile_dir)/enum_internal/vscode/.vscode/
+	find . -name '*.enum.go' -type f -delete
 
 build:
 	go build $(makefile_dir)/cmd/enumer
