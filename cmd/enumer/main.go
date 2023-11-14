@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -21,9 +22,6 @@ import (
 	"github.com/gertd/go-pluralize"
 	"gopkg.in/yaml.v2"
 )
-
-//go:embed enum.schema.json
-var jsonSchemaContent string
 
 //go:embed settings.json
 var vscodeSettingsContext string
@@ -109,6 +107,67 @@ func main() {
 	}
 }
 
+func generateJsonSchema() string {
+	m := map[string]any{
+		"$schema": "http://json-schema.org/draft-07/schema",
+		"title":   "Bounded Infinity enumeration tool",
+		"type":    "object",
+		"version": "1.0.19",
+		"properties": map[string]any{
+			"type": map[string]any{
+				"type": "string",
+			},
+			"package": map[string]any{
+				"type": "string",
+			},
+			"output-path": map[string]any{
+				"type": "string",
+			},
+			"desc": map[string]any{
+				"type": "string",
+			},
+			"header": map[string]any{
+				"type": "string",
+			},
+			"header-from": map[string]any{
+				"type": "string",
+			},
+			"serialize": map[string]any{
+				"type": "string",
+				"enum": caser.ConverterCombinations(),
+			},
+			"skip-format": map[string]any{
+				"type": "boolean",
+			},
+			"debug": map[string]any{
+				"type": "boolean",
+			},
+			"values": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"name": map[string]any{
+							"type": "string",
+						},
+						"serialized": map[string]any{
+							"type": "string",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	bs, err := json.MarshalIndent(m, "", "    ")
+
+	if err != nil {
+		panic(err)
+	}
+
+	return string(bs)
+}
+
 func processJsonSchema(args argsData) error {
 	projectSettingsDir := pather.Join(args.VsCode, ".vscode")
 
@@ -138,7 +197,7 @@ func processJsonSchema(args argsData) error {
 
 	projectEnumsPath := pather.Join(projectSettingsDir, jsonSchemaName)
 
-	if err := os.WriteFile(projectEnumsPath, []byte(jsonSchemaContent), FilePermissions); err != nil {
+	if err := os.WriteFile(projectEnumsPath, []byte(generateJsonSchema()), FilePermissions); err != nil {
 		return err
 	}
 
