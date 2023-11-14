@@ -307,6 +307,8 @@ func processEnum(args argsData, enum *enumData) error {
 			}
 		}
 
+		value.Name = stringer.RemoveSymbols(value.Name)
+		value.Name = stringer.RemoveSpace(value.Name)
 		enum.Values[i] = value
 	}
 
