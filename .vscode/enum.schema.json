@@ -1,0 +1,205 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "properties": {
+        "debug": {
+            "type": "boolean"
+        },
+        "desc": {
+            "type": "string"
+        },
+        "header": {
+            "type": "string"
+        },
+        "header-from": {
+            "type": "string"
+        },
+        "output-path": {
+            "type": "string"
+        },
+        "package": {
+            "type": "string"
+        },
+        "serialize": {
+            "properties": {
+                "type": {
+                    "enum": [
+                        "camel-to-kebab",
+                        "camel-to-kebab-lower",
+                        "camel-to-kebab-upper",
+                        "camel-to-pascal",
+                        "camel-to-phrase",
+                        "camel-to-snake",
+                        "camel-to-snake-lower",
+                        "camel-to-snake-upper",
+                        "kebab-to-camel",
+                        "kebab-to-kebab-lower",
+                        "kebab-to-kebab-upper",
+                        "kebab-to-pascal",
+                        "kebab-to-phrase",
+                        "kebab-to-snake",
+                        "kebab-to-snake-lower",
+                        "kebab-to-snake-upper",
+                        "kebab-lower-to-camel",
+                        "kebab-lower-to-kebab",
+                        "kebab-lower-to-kebab-upper",
+                        "kebab-lower-to-pascal",
+                        "kebab-lower-to-phrase",
+                        "kebab-lower-to-snake",
+                        "kebab-lower-to-snake-lower",
+                        "kebab-lower-to-snake-upper",
+                        "kebab-upper-to-camel",
+                        "kebab-upper-to-kebab",
+                        "kebab-upper-to-kebab-lower",
+                        "kebab-upper-to-pascal",
+                        "kebab-upper-to-phrase",
+                        "kebab-upper-to-snake",
+                        "kebab-upper-to-snake-lower",
+                        "kebab-upper-to-snake-upper",
+                        "pascal-to-camel",
+                        "pascal-to-kebab",
+                        "pascal-to-kebab-lower",
+                        "pascal-to-kebab-upper",
+                        "pascal-to-phrase",
+                        "pascal-to-snake",
+                        "pascal-to-snake-lower",
+                        "pascal-to-snake-upper",
+                        "phrase-to-camel",
+                        "phrase-to-kebab",
+                        "phrase-to-kebab-lower",
+                        "phrase-to-kebab-upper",
+                        "phrase-to-pascal",
+                        "phrase-to-snake",
+                        "phrase-to-snake-lower",
+                        "phrase-to-snake-upper",
+                        "snake-to-camel",
+                        "snake-to-kebab",
+                        "snake-to-kebab-lower",
+                        "snake-to-kebab-upper",
+                        "snake-to-pascal",
+                        "snake-to-phrase",
+                        "snake-to-snake-lower",
+                        "snake-to-snake-upper",
+                        "snake-lower-to-camel",
+                        "snake-lower-to-kebab",
+                        "snake-lower-to-kebab-lower",
+                        "snake-lower-to-kebab-upper",
+                        "snake-lower-to-pascal",
+                        "snake-lower-to-phrase",
+                        "snake-lower-to-snake",
+                        "snake-lower-to-snake-upper",
+                        "snake-upper-to-camel",
+                        "snake-upper-to-kebab",
+                        "snake-upper-to-kebab-lower",
+                        "snake-upper-to-kebab-upper",
+                        "snake-upper-to-pascal",
+                        "snake-upper-to-phrase",
+                        "snake-upper-to-snake",
+                        "snake-upper-to-snake-lower"
+                    ],
+                    "type": "string"
+                },
+                "value": {
+                    "enum": [
+                        "camel-to-kebab",
+                        "camel-to-kebab-lower",
+                        "camel-to-kebab-upper",
+                        "camel-to-pascal",
+                        "camel-to-phrase",
+                        "camel-to-snake",
+                        "camel-to-snake-lower",
+                        "camel-to-snake-upper",
+                        "kebab-to-camel",
+                        "kebab-to-kebab-lower",
+                        "kebab-to-kebab-upper",
+                        "kebab-to-pascal",
+                        "kebab-to-phrase",
+                        "kebab-to-snake",
+                        "kebab-to-snake-lower",
+                        "kebab-to-snake-upper",
+                        "kebab-lower-to-camel",
+                        "kebab-lower-to-kebab",
+                        "kebab-lower-to-kebab-upper",
+                        "kebab-lower-to-pascal",
+                        "kebab-lower-to-phrase",
+                        "kebab-lower-to-snake",
+                        "kebab-lower-to-snake-lower",
+                        "kebab-lower-to-snake-upper",
+                        "kebab-upper-to-camel",
+                        "kebab-upper-to-kebab",
+                        "kebab-upper-to-kebab-lower",
+                        "kebab-upper-to-pascal",
+                        "kebab-upper-to-phrase",
+                        "kebab-upper-to-snake",
+                        "kebab-upper-to-snake-lower",
+                        "kebab-upper-to-snake-upper",
+                        "pascal-to-camel",
+                        "pascal-to-kebab",
+                        "pascal-to-kebab-lower",
+                        "pascal-to-kebab-upper",
+                        "pascal-to-phrase",
+                        "pascal-to-snake",
+                        "pascal-to-snake-lower",
+                        "pascal-to-snake-upper",
+                        "phrase-to-camel",
+                        "phrase-to-kebab",
+                        "phrase-to-kebab-lower",
+                        "phrase-to-kebab-upper",
+                        "phrase-to-pascal",
+                        "phrase-to-snake",
+                        "phrase-to-snake-lower",
+                        "phrase-to-snake-upper",
+                        "snake-to-camel",
+                        "snake-to-kebab",
+                        "snake-to-kebab-lower",
+                        "snake-to-kebab-upper",
+                        "snake-to-pascal",
+                        "snake-to-phrase",
+                        "snake-to-snake-lower",
+                        "snake-to-snake-upper",
+                        "snake-lower-to-camel",
+                        "snake-lower-to-kebab",
+                        "snake-lower-to-kebab-lower",
+                        "snake-lower-to-kebab-upper",
+                        "snake-lower-to-pascal",
+                        "snake-lower-to-phrase",
+                        "snake-lower-to-snake",
+                        "snake-lower-to-snake-upper",
+                        "snake-upper-to-camel",
+                        "snake-upper-to-kebab",
+                        "snake-upper-to-kebab-lower",
+                        "snake-upper-to-kebab-upper",
+                        "snake-upper-to-pascal",
+                        "snake-upper-to-phrase",
+                        "snake-upper-to-snake",
+                        "snake-upper-to-snake-lower"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "skip-format": {
+            "type": "boolean"
+        },
+        "type": {
+            "type": "string"
+        },
+        "values": {
+            "items": {
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "serialized": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "type": "array"
+        }
+    },
+    "title": "Bounded Infinity enumeration tool",
+    "type": "object",
+    "version": "1.0.19"
+}

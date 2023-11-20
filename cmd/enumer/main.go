@@ -42,19 +42,24 @@ var (
 )
 
 type enumData struct {
-	Type        string      `json:"type" yaml:"type"`
-	Struct      string      `json:"struct" yaml:"struct"`
-	Package     string      `json:"package" yaml:"package"`
-	InputPath   string      `json:"input-path" yaml:"input-path"`
-	OutputPath  string      `json:"output-path" yaml:"output-path"`
-	Desc        string      `json:"desc" yaml:"desc"`
-	Header      string      `json:"header" yaml:"header"`
-	HeaderFrom  string      `json:"header-from" yaml:"header-from"`
-	HeaderLines []string    `json:"header-lines" yaml:"header-lines"`
-	SkipFormat  bool        `json:"skip-format" yaml:"skip-format"`
-	Debug       bool        `json:"debug" yaml:"debug"`
-	Values      []enumvalue `json:"values" yaml:"values"`
-	Serialize   string      `json:"serialize" yaml:"serialize"`
+	Type        string        `json:"type" yaml:"type"`
+	Struct      string        `json:"struct" yaml:"struct"`
+	Package     string        `json:"package" yaml:"package"`
+	InputPath   string        `json:"input-path" yaml:"input-path"`
+	OutputPath  string        `json:"output-path" yaml:"output-path"`
+	Desc        string        `json:"desc" yaml:"desc"`
+	Header      string        `json:"header" yaml:"header"`
+	HeaderFrom  string        `json:"header-from" yaml:"header-from"`
+	HeaderLines []string      `json:"header-lines" yaml:"header-lines"`
+	SkipFormat  bool          `json:"skip-format" yaml:"skip-format"`
+	Debug       bool          `json:"debug" yaml:"debug"`
+	Serialize   enumSerialize `json:"serialize" yaml:"serialize"`
+	Values      []enumvalue   `json:"values" yaml:"values"`
+}
+
+type enumSerialize struct {
+	Type  string `json:"type" yaml:"type"`
+	Value string `json:"value" yaml:"value"`
 }
 
 type enumvalue struct {
@@ -133,8 +138,17 @@ func generateJsonSchema() string {
 				"type": "string",
 			},
 			"serialize": map[string]any{
-				"type": "string",
-				"enum": caser.ConverterCombinations(),
+				"type": "object",
+				"properties": map[string]any{
+					"type": map[string]any{
+						"type": "string",
+						"enum": caser.ConverterCombinations(),
+					},
+					"value": map[string]any{
+						"type": "string",
+						"enum": caser.ConverterCombinations(),
+					},
+				},
 			},
 			"skip-format": map[string]any{
 				"type": "boolean",
@@ -171,13 +185,13 @@ func generateJsonSchema() string {
 func processJsonSchema(args argsData) error {
 	projectSettingsDir := pather.Join(args.VsCode, ".vscode")
 
-	if err := pather.DirEnsure(projectSettingsDir); err != nil {
+	if _, err := pather.Dirs.EnsureErr(projectSettingsDir); err != nil {
 		return err
 	}
 
 	projectSettingsPath := pather.Join(projectSettingsDir, vscodeSettingsName)
 
-	if pather.PathExists(projectSettingsPath) {
+	if pather.Paths.Exists(projectSettingsPath) {
 		name := fmt.Sprintf("enumer-schema-%v", vscodeSettingsName)
 		projectSettingsPath = pather.Join(projectSettingsDir, name)
 
@@ -263,18 +277,30 @@ func processEnum(args argsData, enum *enumData) error {
 
 	if enum.Package == "" {
 		enum.Package = enum.OutputPath
-		enum.Package = pather.Dir(enum.Package)
-		enum.Package = pather.Base(enum.Package)
+		enum.Package = pather.Paths.Dir(enum.Package)
+		enum.Package = pather.Paths.Base(enum.Package)
 		enum.Package = stringer.ReplaceInList(enum.Package, []string{"-", " "}, "_")
+	}
+
+	var typeConverter func(string) string
+
+	if enum.Serialize.Type != "" {
+		if c, err := caser.Converter[string](enum.Serialize.Type); err != nil {
+			return err
+		} else {
+			typeConverter = c
+		}
+	} else {
+		typeConverter = caser.PhraseToPascal[string]
 	}
 
 	if enum.Type == "" {
 		enum.Type = enum.OutputPath
-		enum.Type = pather.Base(enum.Type)
+		enum.Type = pather.Paths.Base(enum.Type)
 		enum.Type = extentioner.Strip(enum.Type)
 		enum.Type = extentioner.Strip(enum.Type)
 		enum.Type = stringer.ReplaceInList(enum.Type, []string{"-"}, " ")
-		enum.Type = caser.PhraseToPascal(enum.Type)
+		enum.Type = typeConverter(enum.Type)
 	}
 
 	if enum.Struct == "" {
@@ -282,14 +308,19 @@ func processEnum(args argsData, enum *enumData) error {
 		enum.Struct = pluralize.NewClient().Plural(enum.Struct)
 	}
 
-	var converter func(string) string
+	var valueConverter func(string) string
+	passthrough := func(s string) string {
+		return s
+	}
 
-	if enum.Serialize != "" {
-		if c, err := caser.Converter[string](enum.Serialize); err != nil {
+	if enum.Serialize.Value != "" {
+		if c, err := caser.Converter[string](enum.Serialize.Value); err != nil {
 			return err
 		} else {
-			converter = c
+			valueConverter = c
 		}
+	} else {
+		valueConverter = passthrough
 	}
 
 	for i := 0; i < len(enum.Values); i++ {
@@ -300,11 +331,7 @@ func processEnum(args argsData, enum *enumData) error {
 		}
 
 		if value.Serialized == "" {
-			if converter != nil {
-				value.Serialized = converter(value.Name)
-			} else {
-				value.Serialized = value.Name
-			}
+			value.Serialized = valueConverter(value.Name)
 		}
 
 		value.Name = stringer.RemoveSymbols(value.Name)
@@ -342,10 +369,14 @@ func processEnum(args argsData, enum *enumData) error {
 }
 
 func processWrite(enum enumData, bs []byte) error {
-	dir := path.Dir(enum.OutputPath)
+	dir := pather.Paths.Dir(enum.OutputPath)
 	err := os.MkdirAll(dir, FilePermissions)
 
 	if err != nil {
+		return err
+	}
+
+	if _, err := pather.Paths.RemoveErr(enum.OutputPath); err != nil {
 		return err
 	}
 
