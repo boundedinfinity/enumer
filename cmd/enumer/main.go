@@ -53,6 +53,7 @@ type enumData struct {
 	HeaderLines []string      `json:"header-lines" yaml:"header-lines"`
 	SkipFormat  bool          `json:"skip-format" yaml:"skip-format"`
 	Debug       bool          `json:"debug" yaml:"debug"`
+	Overwrite   bool          `json:"overwrite" yaml:"overwrite"`
 	Serialize   enumSerialize `json:"serialize" yaml:"serialize"`
 	Values      []enumvalue   `json:"values" yaml:"values"`
 }
@@ -73,6 +74,7 @@ type argsData struct {
 	Debug      bool
 	VsCode     string
 	Serialize  string
+	Overwrite  bool
 }
 
 func handleErr(err error) {
@@ -365,10 +367,24 @@ func processEnum(args argsData, enum *enumData) error {
 		asciibox.BoxOptions{Alignment: asciibox.Alignment_Left},
 	)
 
+	if args.Overwrite {
+		enum.Overwrite = true
+	}
+
 	return nil
 }
 
 func processWrite(enum enumData, bs []byte) error {
+	if pather.Paths.Exists(enum.OutputPath) {
+		if enum.Overwrite {
+			if _, err := pather.Paths.RemoveErr(enum.OutputPath); err != nil {
+				return err
+			}
+		} else {
+			return nil
+		}
+	}
+
 	dir := pather.Paths.Dir(enum.OutputPath)
 	err := os.MkdirAll(dir, FilePermissions)
 
