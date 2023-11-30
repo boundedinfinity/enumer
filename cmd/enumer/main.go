@@ -313,7 +313,7 @@ func processEnum(args argsData, enum *enumData) error {
 		return s
 	}
 
-	if enum.Serialize.Value != "" {
+	if !stringer.IsEmpty(enum.Serialize.Value) {
 		if c, err := caser.Converter[string](enum.Serialize.Value); err != nil {
 			return err
 		} else {

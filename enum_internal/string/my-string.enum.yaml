@@ -1,5 +1,7 @@
 # type: MyString
 package: enum_internal
+serialized:
+    values: pascal-to-kebab-lower
 # skip-format: true
 values:
     -   name: MyString1
