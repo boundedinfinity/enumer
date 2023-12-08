@@ -442,6 +442,7 @@ var standaloneTmpl = `
 package {{ .Package }}
 
 import (
+	"encoding/xml"
 	"database/sql/driver"
 	"fmt"
 	
@@ -483,6 +484,18 @@ func (t {{ $typeName }}) MarshalYAML() (interface{}, error) {
 
 func (t *{{ $typeName }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return enumer.UnmarshalYAML(unmarshal, t, {{ title $structName }}.Parse)
+}
+
+// /////////////////////////////////////////////////////////////////
+//  {{ $typeName }} XML marshal/unmarshal implemenation
+// /////////////////////////////////////////////////////////////////
+
+func (t {{ $typeName }}) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return enumer.MarshalXML(t, e, start)
+}
+
+func (t *{{ $typeName }}) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	return enumer.UnmarshalXML(t, {{ title $structName }}.Parse, d, start)
 }
 
 // /////////////////////////////////////////////////////////////////

@@ -9,3 +9,4 @@ values:
     -   name: MyString2
         serialized: my-string-2
     -   name: MyString3
+        serialize: MyString3

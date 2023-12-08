@@ -3,6 +3,7 @@ package enumer
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"reflect"
 	"strings"
@@ -33,6 +34,28 @@ func IsEq[A ~string, B ~string](a A) func(B) bool {
 			lower == strings.ToLower(bs) ||
 			upper == strings.ToUpper(bs)
 	}
+}
+
+func MarshalXML[E ~string](e E, enc *xml.Encoder, start xml.StartElement) error {
+	return enc.EncodeElement(string(e), start)
+}
+
+func UnmarshalXML[E ~string](e *E, parser func(string) (E, error), d *xml.Decoder, start xml.StartElement) error {
+	var s string
+
+	if err := d.DecodeElement(&s, &start); err != nil {
+		return err
+	}
+
+	p, err := parser(s)
+
+	if err != nil {
+		return err
+	}
+
+	*e = p
+
+	return nil
 }
 
 func MarshalJSON[E ~string](e E) ([]byte, error) {
