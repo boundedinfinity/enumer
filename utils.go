@@ -5,13 +5,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"reflect"
 	"strings"
 )
-
-func GetName[E ~string]() string {
-	return reflect.TypeOf(E("")).String()
-}
 
 func Join[A ~string](values []A, sep string) string {
 	var ss []string
