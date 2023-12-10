@@ -23,6 +23,10 @@ install: build
 test: purge build generate
 	go test ./...
 
+pull:
+	git fetch
+	git pull origin master
+
 push:
 	git add . || true
 	git commit -m "$(m)" || true
