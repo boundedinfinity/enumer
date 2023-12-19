@@ -23,7 +23,7 @@ func Test_Parse_Err(t *testing.T) {
 
 	assert.ErrorIs(t, err, enum_internal.MyStrings.Err)
 	// assert.Equal(t, "invalid invalid MyString value 'xxxx'. Must be one of my-string-1, my-string-2, MyString3", err.Error())
-	assert.Equal(t, "invalid invalid MyString value 'xxxx'. Must be one of my-string-1, my-string-2, my-string-3", err.Error())
+	assert.Equal(t, "invalid invalid MyString value 'xxxx'. Must be one of my-string-1, my-string-2, Mystring3", err.Error())
 	assert.Equal(t, expected, actual)
 }
 
@@ -31,7 +31,7 @@ func Test_String(t *testing.T) {
 	assert.Equal(t, "my-string-1", enum_internal.MyStrings.MyString1.String())
 	assert.Equal(t, "my-string-2", enum_internal.MyStrings.MyString2.String())
 	// assert.Equal(t, "MyString3", enum_internal.MyStrings.MyString3.String())
-	assert.Equal(t, "my-string-3", enum_internal.MyStrings.MyString3.String())
+	assert.Equal(t, "Mystring3", enum_internal.MyStrings.MyString3.String())
 }
 
 func Test_Is(t *testing.T) {

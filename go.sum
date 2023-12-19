@@ -4,6 +4,8 @@ github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 h1
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7/go.mod h1:KMN60klM/vjr5H+dMU3YHKo1pjeQJvPQ21DqpflFwsI=
 github.com/boundedinfinity/go-commoner v1.0.30 h1:kPUu5XiqTN/AUs+WN4F2uo7lkCMLQ/MeUChFxc76Y9E=
 github.com/boundedinfinity/go-commoner v1.0.30/go.mod h1:rC7dI+AGEjP8Jt/LZkINSty4EKxu7GISvzf6s/OWFH8=
+github.com/dave/jennifer v1.7.0 h1:uRbSBH9UTS64yXbh4FrMHfgfY762RD+C7bUPKODpSJE=
+github.com/dave/jennifer v1.7.0/go.mod h1:nXbxhEmQfOZhWml3D1cDK5M1FLnMSozpbFN/m3RmGZc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

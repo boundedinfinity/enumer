@@ -1,18 +1,14 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"go/format"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
-	"text/template"
 
 	"github.com/boundedinfinity/asciibox"
 	"github.com/boundedinfinity/enumer"
@@ -20,6 +16,7 @@ import (
 	"github.com/boundedinfinity/go-commoner/idiomatic/extentioner"
 	"github.com/boundedinfinity/go-commoner/idiomatic/pather"
 	"github.com/boundedinfinity/go-commoner/idiomatic/stringer"
+	"github.com/dave/jennifer/jen"
 	"github.com/gertd/go-pluralize"
 	"gopkg.in/yaml.v2"
 )
@@ -275,8 +272,7 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 		enum.Type = pather.Paths.Base(enum.Type)
 		enum.Type = extentioner.Strip(enum.Type)
 		enum.Type = extentioner.Strip(enum.Type)
-		enum.Type = stringer.ReplaceInList(enum.Type, []string{"-"}, " ")
-		enum.Type = typeConverter(enum.Type)
+		enum.Type = caser.KebabToPascal(enum.Type)
 	}
 
 	if enum.Struct == "" {
@@ -302,16 +298,16 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 	for i := 0; i < len(enum.Values); i++ {
 		value := enum.Values[i]
 
-		if value.Name == "" {
-			return fmt.Errorf("Invalid values[%v] name", i)
+		if stringer.IsEmpty(value.Name) && stringer.IsEmpty(value.Serialized) {
+			return fmt.Errorf("Invalid values[%v] name or serialized value", i)
+		} else if stringer.IsEmpty(value.Name) && !stringer.IsEmpty(value.Serialized) {
+			value.Name = valueConverter(value.Serialized)
+			value.Name = stringer.RemoveSymbols(value.Name)
+			value.Name = stringer.RemoveSpace(value.Name)
+		} else if !stringer.IsEmpty(value.Name) && stringer.IsEmpty(value.Serialized) {
+			value.Serialized = typeConverter(value.Name)
 		}
 
-		if value.Serialized == "" {
-			value.Serialized = valueConverter(value.Name)
-		}
-
-		value.Name = stringer.RemoveSymbols(value.Name)
-		value.Name = stringer.RemoveSpace(value.Name)
 		enum.Values[i] = value
 	}
 
@@ -378,183 +374,233 @@ func processWrite(enum enumer.EnumData, bs []byte) error {
 }
 
 func processTemplate(enum enumer.EnumData) ([]byte, error) {
-	funcs := template.FuncMap{
-		"title": func(s string) string {
-			return strings.Title(s)
-		},
-		"lower": func(s string) string {
-			return strings.ToLower(s)
-		},
-		"lowerFirst": func(s string) string {
-			return stringer.ToLowerFirst(s)
-		},
-	}
+	enumerPkg := "github.com/boundedinfinity/enumer"
+	pluralize := pluralize.NewClient()
+	companionVar := pluralize.Plural(enum.Type)
+	companionStruct := stringer.ToLowerFirst(companionVar)
 
-	filename := path.Base(enum.OutputPath)
-	t, err := template.New(filename).Funcs(funcs).Parse(standaloneTmpl)
+	f := jen.NewFile(enum.Package)
+	f.Comment(enum.Header).Line()
 
-	if err != nil {
-		return []byte{}, nil
-	}
+	f.Type().Id(enum.Type).String().Line()
 
-	var b bytes.Buffer
+	f.Func().Params(jen.Id("t").Id(enum.Type)).Id("String").Params().String().
+		Block(jen.Return(jen.String().Params(jen.Id("t")))).
+		Line()
 
-	if err := t.Execute(&b, enum); err != nil {
-		return []byte{}, err
-	}
+	f.Comment(`// /////////////////////////////////////////////////////////////////
+    //  JSON serializatoin
+    // /////////////////////////////////////////////////////////////////
+    `)
 
-	if enum.SkipFormat {
-		return b.Bytes(), nil
-	} else {
-		return format.Source(b.Bytes())
-	}
-}
+	f.Func().Params(jen.Id("t").Id(enum.Type)).
+		Id("MarshalJSON").
+		Params().Params(jen.Index().Byte(), jen.Error()).
+		Block(jen.Return(jen.Qual(enumerPkg, "MarshalJSON").Params(jen.Id("t")))).
+		Line()
 
-var standaloneTmpl = `
-{{ .Header }}
+	f.Func().Params(jen.Id("t").Op("*").Id(enum.Type)).
+		Id("UnmarshalJSON").
+		Params(jen.Id("data").Index().Byte()).Params(jen.Error()).
+		Block(jen.Return(jen.Qual(enumerPkg, "UnmarshalJSON").Params(
+			jen.Id("data"),
+			jen.Id("t"),
+			jen.Id(companionVar).Dot("Parse"),
+		))).
+		Line()
 
-package {{ .Package }}
+	f.Comment(`// /////////////////////////////////////////////////////////////////
+    //  YAML serializatoin
+    // /////////////////////////////////////////////////////////////////
+    `)
 
-import (
-	"encoding/xml"
-	"database/sql/driver"
-	"fmt"
-	
-	"github.com/boundedinfinity/enumer"
-)
+	f.Func().Params(jen.Id("t").Id(enum.Type)).Id("MarshalYAML").
+		Params().Params(jen.Interface(), jen.Error()).
+		Block(jen.Return(jen.Qual(enumerPkg, "MarshalYAML").Params(jen.Id("t")))).
+		Line()
 
-{{- $typeName := .Type }}
-{{- $structName := .Struct }}
+	f.Func().Params(jen.Id("t").Op("*").Id(enum.Type)).Id("UnmarshalYAML").
+		Params(jen.Id("unmarshal").Func().Params(jen.Interface()).Error()).
+		Error().
+		Block(jen.Return(jen.Qual(enumerPkg, "UnmarshalYAML").Params(
+			jen.Id("unmarshal"),
+			jen.Id("t"),
+			jen.Id(companionVar).Dot("Parse"),
+		))).
+		Line()
 
-type {{ $typeName }} string
+	f.Comment(`// /////////////////////////////////////////////////////////////////
+    //  XML serializatoin
+    // /////////////////////////////////////////////////////////////////
+    `)
 
-// /////////////////////////////////////////////////////////////////
-//  {{ $typeName }} Stringer implemenation
-// /////////////////////////////////////////////////////////////////
+	f.Func().Params(jen.Id("t").Id(enum.Type)).Id("MarshalXML").
+		Params(
+			jen.Id("e").Op("*").Qual("encoding/xml", "Encoder"),
+			jen.Id("start").Qual("encoding/xml", "StartElement"),
+		).Error().
+		Block(jen.Return(jen.Qual(enumerPkg, "MarshalXML").Params(
+			jen.Id("t"),
+			jen.Id("e"),
+			jen.Id("start"),
+		))).
+		Line()
 
-func (t {{ $typeName }}) String() string {
-	return string(t)
-}
+	f.Func().Params(jen.Id("t").Op("*").Id(enum.Type)).Id("UnmarshalXML").
+		Params(
+			jen.Id("d").Op("*").Qual("encoding/xml", "Decoder"),
+			jen.Id("start").Qual("encoding/xml", "StartElement"),
+		).Error().
+		Block(jen.Return(jen.Qual(enumerPkg, "UnmarshalXML").Params(
+			jen.Id("t"),
+			jen.Id(companionVar).Dot("Parse"),
+			jen.Id("d"),
+			jen.Id("start"),
+		))).
+		Line()
 
-// /////////////////////////////////////////////////////////////////
-//  {{ $typeName }} JSON marshal/unmarshal implemenation
-// /////////////////////////////////////////////////////////////////
+	f.Comment(`// /////////////////////////////////////////////////////////////////
+    //  SQL serializatoin
+    // /////////////////////////////////////////////////////////////////
+    `)
 
-func (t {{ $typeName }}) MarshalJSON() ([]byte, error) {
-	return enumer.MarshalJSON(t)
-}
+	f.Func().Params(jen.Id("t").Id(enum.Type)).Id("Value").
+		Params().Params(jen.Qual("database/sql/driver", "Value"), jen.Error()).
+		Block(jen.Return(jen.Qual(enumerPkg, "Value").Params(jen.Id("t")))).
+		Line()
 
-func (t *{{ $typeName }}) UnmarshalJSON(data []byte) error {
-	return enumer.UnmarshalJSON(data, t, {{ title $structName }}.Parse)
-}
+	f.Func().Params(jen.Id("t").Op("*").Id(enum.Type)).Id("Scan").
+		Params(
+			jen.Id("value").Interface(),
+		).
+		Error().
+		Block(jen.Return(jen.Qual(enumerPkg, "Scan").Params(
+			jen.Id("value"),
+			jen.Id("t"),
+			jen.Id(companionVar).Dot("Parse"),
+		))).
+		Line()
 
-// /////////////////////////////////////////////////////////////////
-//  {{ $typeName }} YAML marshal/unmarshal implemenation
-// /////////////////////////////////////////////////////////////////
+	f.Comment(`// /////////////////////////////////////////////////////////////////
+    //  Companion
+    // /////////////////////////////////////////////////////////////////
+    `)
 
-func (t {{ $typeName }}) MarshalYAML() (interface{}, error) {
-	return enumer.MarshalYAML(t)
-}
-
-func (t *{{ $typeName }}) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	return enumer.UnmarshalYAML(unmarshal, t, {{ title $structName }}.Parse)
-}
-
-// /////////////////////////////////////////////////////////////////
-//  {{ $typeName }} XML marshal/unmarshal implemenation
-// /////////////////////////////////////////////////////////////////
-
-func (t {{ $typeName }}) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return enumer.MarshalXML(t, e, start)
-}
-
-func (t *{{ $typeName }}) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return enumer.UnmarshalXML(t, {{ title $structName }}.Parse, d, start)
-}
-
-// /////////////////////////////////////////////////////////////////
-//  {{ $typeName }} SQL Database marshal/unmarshal implemenation
-// /////////////////////////////////////////////////////////////////
-
-func (t {{ $typeName }}) Value() (driver.Value, error) {
-	return enumer.Value(t)
-}
-
-func (t *{{ $typeName }}) Scan(value interface{}) error {
-	return enumer.Scan(value, t, {{ title $structName }}.Parse)
-}
-
-// /////////////////////////////////////////////////////////////////
-//
-//  Enumeration
-//
-// /////////////////////////////////////////////////////////////////
-
-type {{ lowerFirst $structName }} struct {
-{{- range $field := .Values }}
-    {{ $field.Name }}  {{ $typeName -}}
-{{- end }}
-    Values []{{ $typeName }}
-    Err error
-}
-
-var {{ $structName }} = {{ lowerFirst $structName }}{	
-{{- range $field := .Values }}
-    {{ $field.Name }}: {{ $typeName -}}("{{- $field.Serialized -}}"),
-{{- end }}
-	Err: fmt.Errorf("invalid {{ $typeName }}"),
-}
-
-func init() {
-	{{ title $structName }}.Values = []{{ $typeName -}} {
-	{{- range $field := .Values }}
-		{{ title $structName }}.{{ $field.Name }},
-	{{- end }}
-	}
-}
-
-func (t {{ lowerFirst $structName }}) newErr(a any, values ...{{ $typeName }}) error {
-	return fmt.Errorf(
-		"invalid %w value '%v'. Must be one of %v",
-		{{ title $structName }}.Err, 
-		a, 
-		enumer.Join(values, ", "),
-	)
-}
-
-func (t {{ lowerFirst $structName }}) ParseFrom(v string, values ...{{ $typeName }}) ({{ $typeName }}, error) {
-	var found {{ $typeName }}
-	var ok bool
-
-	for _, value := range values {
-		if enumer.IsEq[string, {{ $typeName }}](v)(value) {
-			found = value
-			ok = true
-			break
+	f.Type().Id(companionStruct).StructFunc(func(g *jen.Group) {
+		for _, value := range enum.Values {
+			g.Id(value.Name).Id(enum.Type)
 		}
-	}
 
-	if !ok {
-		return found, t.newErr(v, values...)
-	}
+		g.Id("Values").Index().Id(enum.Type)
+		g.Id("Err").Error()
+	})
 
-	return found, nil
-}
-
-func (t {{ lowerFirst $structName }}) Parse(v string) ({{ $typeName }}, error) {
-	return t.ParseFrom(v, {{ title $structName }}.Values...)
-}
-
-func (t {{ lowerFirst $structName }}) IsFrom(v string, values ...{{ $typeName }}) bool {
-	for _, value := range values {
-		if enumer.IsEq[string, {{ $typeName }}](v)(value) {
-			return true
+	f.Var().Id(companionVar).Op("=").Id(companionStruct).Block(jen.DictFunc(func(d jen.Dict) {
+		d[jen.Id("Err")] = jen.Qual("fmt", "Errorf").Params(jen.Lit("invalid " + enum.Type))
+		for _, value := range enum.Values {
+			d[jen.Id(value.Name)] = jen.Id(enum.Type).Parens(jen.Lit(value.Serialized))
 		}
-	}
-	return false
-}
+	}))
 
-func (t {{ lowerFirst $structName }}) Is(v string) bool {
-	return t.IsFrom(v, {{ title $structName }}.Values...)
+	f.Func().Id("init").Params().BlockFunc(func(g *jen.Group) {
+		g.Id(companionVar).Dot("Values").Op("=").Index().Id(enum.Type).ValuesFunc(func(g *jen.Group) {
+			for _, value := range enum.Values {
+				g.Line().Id(companionVar).Dot(value.Name)
+			}
+			g.Line()
+		})
+	}).Line()
+
+	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("newErr").Params(
+		jen.Id("a").Any(),
+		jen.Id("values").Op("...").Id(enum.Type),
+	).Error().Block(jen.Return(
+		jen.Qual("fmt", "Errorf").Params(
+			jen.Line().Lit("invalid %w value '%v'. Must be one of %v"),
+			jen.Line().Id(companionVar).Dot("Err"),
+			jen.Line().Id("a"),
+			jen.Line().Qual(enumerPkg, "Join").Params(
+				jen.Id("values"),
+				jen.Lit(", "),
+			),
+		),
+	)).Line()
+
+	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("ParseFrom").Params(
+		jen.Id("v").String(),
+		jen.Id("values").Op("...").Id(enum.Type),
+	).Params(
+		jen.Id(enum.Type),
+		jen.Error(),
+	).BlockFunc(func(g *jen.Group) {
+		g.Var().Id("found").Id(enum.Type)
+		g.Var().Id("ok").Bool().Line()
+		g.For().Id("_").Op(",").Id("value").Op(":=").Range().Id("values").BlockFunc(func(g *jen.Group) {
+			g.If(
+				jen.Qual(enumerPkg, "IsEq").Types(
+					jen.String(),
+					jen.Id(enum.Type),
+				).Params(jen.Id("v")).Params(jen.Id("value")).Block(
+					jen.Id("found").Op("=").Id("value"),
+					jen.Id("ok").Op("=").True(),
+					jen.Break(),
+				),
+			)
+		}).Line()
+
+		g.If(jen.Op("!").Id("ok")).Block(jen.Return(
+			jen.Id("found"),
+			jen.Id("t").Dot("newErr").Params(
+				jen.Id("v"),
+				jen.Id("values").Op("..."),
+			),
+		)).Line()
+
+		g.Return(
+			jen.Id("found"),
+			jen.Nil(),
+		)
+	}).Line()
+
+	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("Parse").Params(
+		jen.Id("v").String(),
+	).Params(
+		jen.Id(enum.Type),
+		jen.Error(),
+	).BlockFunc(func(g *jen.Group) {
+		g.Return().Id("t").Dot("ParseFrom").Params(
+			jen.Id("v"),
+			jen.Id(companionVar).Dot("Values").Op("..."),
+		)
+	}).Line()
+
+	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("IsFrom").Params(
+		jen.Id("v").String(),
+		jen.Id("values").Op("...").Id(enum.Type),
+	).Bool().Block(
+		jen.For().Id("_").Op(",").Id("value").Op(":=").Range().Id("values").Block(
+			jen.If(
+				jen.Qual(enumerPkg, "IsEq").
+					Types(jen.String(), jen.Id(enum.Type)).
+					Params(jen.Id("v")).
+					Params(jen.Id("value")).Block(
+					jen.Return().True(),
+				),
+			),
+		),
+		jen.Return().False(),
+	).Line()
+
+	f.Func().Params(
+		jen.Id("t").Id(companionStruct),
+	).Id("Is").Params(
+		jen.Id("v").String(),
+	).Bool().Block(
+		jen.Return().Id("t").Dot("IsFrom").Params(
+			jen.Id("v"),
+			jen.Id(companionVar).Dot("Values").Op("..."),
+		))
+
+	content := fmt.Sprintf("%#v", f)
+	return []byte(content), nil
 }
-`

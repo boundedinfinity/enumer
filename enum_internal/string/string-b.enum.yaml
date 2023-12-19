@@ -1,0 +1,7 @@
+package: enum_internal
+serialize:
+    value: kebab-lower-to-pascal
+values:
+    -   serialized: aaa
+    -   serialized: chrome-extension
+    -   serialized: iris.beep

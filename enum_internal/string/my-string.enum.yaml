@@ -2,6 +2,7 @@
 package: enum_internal
 serialize:
     value: pascal-to-kebab-lower
+overwrite: true
 # skip-format: true
 values:
     -   name: MyString1

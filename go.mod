@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 // indirect
+	github.com/dave/jennifer v1.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
