@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+// /////////////////////////////////////////////////////////////////
+//  Utilities
+// /////////////////////////////////////////////////////////////////
+
 func Join[A ~string](values []A, sep string) string {
 	var ss []string
 
@@ -31,6 +35,10 @@ func IsEq[A ~string, B ~string](a A) func(B) bool {
 	}
 }
 
+// /////////////////////////////////////////////////////////////////
+//  XML serialization
+// /////////////////////////////////////////////////////////////////
+
 func MarshalXML[E ~string](e E, enc *xml.Encoder, start xml.StartElement) error {
 	return enc.EncodeElement(string(e), start)
 }
@@ -52,6 +60,10 @@ func UnmarshalXML[E ~string](e *E, parser func(string) (E, error), d *xml.Decode
 
 	return nil
 }
+
+// /////////////////////////////////////////////////////////////////
+//  JSON serialization
+// /////////////////////////////////////////////////////////////////
 
 func MarshalJSON[E ~string](e E) ([]byte, error) {
 	return json.Marshal(string(e))
@@ -75,6 +87,10 @@ func UnmarshalJSON[E ~string](data []byte, e *E, parser func(string) (E, error))
 	return nil
 }
 
+// /////////////////////////////////////////////////////////////////
+//  YAML serialization
+// /////////////////////////////////////////////////////////////////
+
 func MarshalYAML[E ~string](e E) (interface{}, error) {
 	return string(e), nil
 }
@@ -96,6 +112,10 @@ func UnmarshalYAML[E ~string](unmarshal func(interface{}) error, e *E, parser fu
 
 	return nil
 }
+
+// /////////////////////////////////////////////////////////////////
+//  SQL serialization
+// /////////////////////////////////////////////////////////////////
 
 func Value[E ~string](e E) (driver.Value, error) {
 	return string(e), nil

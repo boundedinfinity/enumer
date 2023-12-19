@@ -255,17 +255,17 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 		enum.Package = stringer.ReplaceInList(enum.Package, []string{"-", " "}, "_")
 	}
 
-	var typeConverter func(string) string
+	// var typeConverter func(string) string
 
-	if enum.Serialize.Type != "" {
-		if c, err := caser.Converter[string](enum.Serialize.Type); err != nil {
-			return err
-		} else {
-			typeConverter = c
-		}
-	} else {
-		typeConverter = caser.PhraseToPascal[string]
-	}
+	// if enum.Serialize.Type != "" {
+	// 	if c, err := caser.Converter[string](enum.Serialize.Type); err != nil {
+	// 		return err
+	// 	} else {
+	// 		typeConverter = c
+	// 	}
+	// } else {
+	// 	typeConverter = caser.PhraseToPascal[string]
+	// }
 
 	if enum.Type == "" {
 		enum.Type = enum.OutputPath
@@ -280,32 +280,37 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 		enum.Struct = pluralize.NewClient().Plural(enum.Struct)
 	}
 
-	var valueConverter func(string) string
-	passthrough := func(s string) string {
-		return s
-	}
+	// var valueConverter func(string) string
+	// passthrough := func(s string) string {
+	// 	return s
+	// }
 
-	if !stringer.IsEmpty(enum.Serialize.Value) {
-		if c, err := caser.Converter[string](enum.Serialize.Value); err != nil {
-			return err
-		} else {
-			valueConverter = c
-		}
-	} else {
-		valueConverter = passthrough
-	}
+	// if !stringer.IsEmpty(enum.Serialize.Value) {
+	// 	if c, err := caser.Converter[string](enum.Serialize.Value); err != nil {
+	// 		return err
+	// 	} else {
+	// 		valueConverter = c
+	// 	}
+	// } else {
+	// 	valueConverter = passthrough
+	// }
 
 	for i := 0; i < len(enum.Values); i++ {
 		value := enum.Values[i]
 
 		if stringer.IsEmpty(value.Name) && stringer.IsEmpty(value.Serialized) {
 			return fmt.Errorf("Invalid values[%v] name or serialized value", i)
-		} else if stringer.IsEmpty(value.Name) && !stringer.IsEmpty(value.Serialized) {
-			value.Name = valueConverter(value.Serialized)
-			value.Name = stringer.RemoveSymbols(value.Name)
+		} else if stringer.IsEmpty(value.Name) && stringer.IsDefined(value.Serialized) {
+			value.Name = stringer.ReplaceNonLanguageCharacters(value.Serialized, " ", "_")
+			value.Name = caser.Convert(value.Name, caser.CaseTypes.Phrase, caser.CaseTypes.Pascal)
+		} else if stringer.IsDefined(value.Name) && stringer.IsEmpty(value.Serialized) {
+			value.Serialized = stringer.RemoveNonLanguageCharacters(value.Name, "_")
+			value.Serialized = caser.PascalToKebabLower(value.Serialized)
+			value.Name = stringer.RemoveNonLanguageCharacters(value.Name, "_")
 			value.Name = stringer.RemoveSpace(value.Name)
-		} else if !stringer.IsEmpty(value.Name) && stringer.IsEmpty(value.Serialized) {
-			value.Serialized = typeConverter(value.Name)
+		} else if stringer.IsDefined(value.Name) && stringer.IsDefined(value.Serialized) {
+			value.Name = stringer.RemoveNonLanguageCharacters(value.Name, "_")
+			value.Name = stringer.RemoveSpace(value.Name)
 		}
 
 		enum.Values[i] = value
@@ -389,7 +394,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		Line()
 
 	f.Comment(`// /////////////////////////////////////////////////////////////////
-    //  JSON serializatoin
+    //  JSON serialization
     // /////////////////////////////////////////////////////////////////
     `)
 
@@ -410,7 +415,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		Line()
 
 	f.Comment(`// /////////////////////////////////////////////////////////////////
-    //  YAML serializatoin
+    //  YAML serialization
     // /////////////////////////////////////////////////////////////////
     `)
 
@@ -430,7 +435,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		Line()
 
 	f.Comment(`// /////////////////////////////////////////////////////////////////
-    //  XML serializatoin
+    //  XML serialization
     // /////////////////////////////////////////////////////////////////
     `)
 
@@ -460,7 +465,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		Line()
 
 	f.Comment(`// /////////////////////////////////////////////////////////////////
-    //  SQL serializatoin
+    //  SQL serialization
     // /////////////////////////////////////////////////////////////////
     `)
 

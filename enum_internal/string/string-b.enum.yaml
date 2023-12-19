@@ -2,6 +2,7 @@ package: enum_internal
 serialize:
     value: kebab-lower-to-pascal
 values:
+    -   name: St. Louis
     -   serialized: aaa
     -   serialized: chrome-extension
     -   serialized: iris.beep
