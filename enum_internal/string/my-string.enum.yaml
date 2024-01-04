@@ -5,9 +5,7 @@ serialize:
 overwrite: true
 # skip-format: true
 values:
-    -   name: MyString1
-        serialized: my-string-1
-    -   name: MyString2
-        serialized: my-string-2
+    -   name: MyString1        
+    -   name: MyString2        
     -   name: MyString3
-        serialize: MyString3
+        

@@ -192,6 +192,12 @@
                     },
                     "serialized": {
                         "type": "string"
+                    },
+                    "parse-from": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "type": "object"

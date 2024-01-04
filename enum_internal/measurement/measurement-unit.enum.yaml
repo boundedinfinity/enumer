@@ -1,0 +1,10 @@
+package: enum_internal
+overwrite: true
+values:
+    -   serialized: foot
+        parse-from:
+          - ft
+          - "'"
+    -   serialized: meter
+        parse-from:
+          - m

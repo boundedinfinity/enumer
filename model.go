@@ -23,6 +23,7 @@ type EnumSerialize struct {
 }
 
 type EnumValue struct {
-	Name       string `json:"name,omitempty" yaml:"name,omitempty"`
-	Serialized string `json:"serialized,omitempty" yaml:"serialized,omitempty"`
+	Name       string   `json:"name,omitempty" yaml:"name,omitempty"`
+	Serialized string   `json:"serialized,omitempty" yaml:"serialized,omitempty"`
+	ParseFrom  []string `json:"parse-from,omitempty" yaml:"parse-from,omitempty"`
 }

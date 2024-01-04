@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "cmd/main measurement", 
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "cwd": "${workspaceFolder}/enum_internal/measurement",
+            "program": "${workspaceFolder}/cmd/enumer/main.go",
+            "args": [
+                "-config=./measurement-unit.enum.yaml",
+            ],
+        },
+        {
             "name": "cmd/main string-b (with formatting)", 
             "type": "go",
             "request": "launch",
