@@ -372,10 +372,14 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 	f := jen.NewFile(enum.Package)
 	f.HeaderComment(enum.Header)
 
+	//////////////////////////////////////////////////////////////////
+	///                             Type                             /
+	//////////////////////////////////////////////////////////////////
+
 	f.Comment(box("Type")).Line()
 
 	if enum.Desc != "" {
-		f.Commentf("%s %s", enum.Type, enum.Desc)
+		f.Commentf("%s %s", enum.Type, stringer.RemoveNewlines(enum.Desc))
 	}
 	f.Type().Id(enum.Type).String().Line()
 
@@ -537,14 +541,25 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		jen.Return(jen.Nil()),
 	).Line()
 
+	//////////////////////////////////////////////////////////////////
+	///                     Companion struct                         /
+	//////////////////////////////////////////////////////////////////
+
 	f.Comment(box("Companion struct")).Line()
 
-	f.Var().Id(companionVar).Op("=").Id(companionStruct).Values(jen.DictFunc(func(d jen.Dict) {
-		d[jen.Id("Err")] = jen.Qual("fmt", "Errorf").Params(jen.Lit("invalid " + enum.Type))
+	f.Var().Id(companionVar).Op("=").Id(companionStruct).ValuesFunc(func(g *jen.Group) {
+		g.Line().Id("Err").Op(":").Qual("fmt", "Errorf").Params(jen.Lit("invalid " + enum.Type))
+		g.Line().Id("Invalid").Op(":").Id(enum.Type).Parens(jen.Lit("invalid"))
+
 		for _, value := range enum.Values {
-			d[jen.Id(value.Name)] = jen.Id(enum.Type).Parens(jen.Lit(value.Serialized))
+			if value.Desc != "" {
+				g.Line().Commentf("%s %s", value.Name, stringer.RemoveNewlines(value.Desc))
+			}
+
+			g.Line().Id(value.Name).Op(":").Id(enum.Type).Parens(jen.Lit(value.Serialized))
 		}
-	}))
+		g.Line()
+	})
 
 	f.Type().Id(companionStruct).StructFunc(func(g *jen.Group) {
 		g.Id("Err").Error()
@@ -552,7 +567,9 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 			jen.Any(),
 			jen.Op("...").Id(enum.Type),
 		).Error()
+
 		g.Id("parseMap").Map(jen.Id(enum.Type)).Index().String()
+		g.Id("Invalid").Id(enum.Type)
 
 		for _, value := range enum.Values {
 			g.Id(value.Name).Id(enum.Type)

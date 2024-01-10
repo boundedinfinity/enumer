@@ -1,8 +1,8 @@
 # type: MyString
 package: enum_internal
 desc: >
-    This is a test description.
-    With more than one line.
+    This is a test description
+    With more than one line
 serialize:
     value: pascal-to-kebab-lower
 overwrite: true
