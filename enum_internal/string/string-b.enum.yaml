@@ -1,8 +1,15 @@
 package: enum_internal
+desc: >
+    This is a test description.
+    With more than one line.
 serialize:
     value: kebab-lower-to-pascal
 values:
     -   name: St. Louis
+        desc: A description of St. Lous
     -   serialized: aaa
+        desc: >
+            A description for aaa.
+            with more than one line.
     -   serialized: chrome-extension
     -   serialized: iris.beep

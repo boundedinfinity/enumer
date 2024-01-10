@@ -1,11 +1,17 @@
 # type: MyString
 package: enum_internal
+desc: >
+    This is a test description.
+    With more than one line.
 serialize:
     value: pascal-to-kebab-lower
 overwrite: true
 # skip-format: true
 values:
-    -   name: MyString1        
-    -   name: MyString2        
+    -   name: MyString1
+        desc: A description of MyString1
+    -   name: MyString2
+        desc: >
+            A description of MyString2
+            with more than one line
     -   name: MyString3
-        

@@ -190,6 +190,9 @@
                     "name": {
                         "type": "string"
                     },
+                    "desc": {
+                        "type": "string"
+                    },
                     "serialized": {
                         "type": "string"
                     },

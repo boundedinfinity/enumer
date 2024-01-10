@@ -374,6 +374,9 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 
 	f.Comment(box("Type")).Line()
 
+	if enum.Desc != "" {
+		f.Commentf("%s %s", enum.Type, enum.Desc)
+	}
 	f.Type().Id(enum.Type).String().Line()
 
 	f.Comment(box("Stringer implemenation")).Line()
