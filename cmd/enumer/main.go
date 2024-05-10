@@ -610,20 +610,24 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 						)),
 					),
 				).Line(),
-				jen.If(jen.Op("!").Id("ok").Block(
-					jen.Return(
-						jen.Id("found"),
-						jen.Id("t").Dot("errf").Params(
-							jen.Id("v"),
-							jen.Id("items").Op("..."),
-						),
-					),
-				)).Line(),
-				jen.Return(jen.Id("found"), jen.Nil()),
+
+				jen.If(jen.Id("ok")).Block(
+					jen.Break(),
+				),
 			),
 		).Line(),
 
-		jen.Return(jen.Id("found").Op(",").Nil()),
+		jen.If(jen.Op("!").Id("ok").Block(
+			jen.Return(
+				jen.Id("found"),
+				jen.Id("t").Dot("errf").Params(
+					jen.Id("v"),
+					jen.Id("items").Op("..."),
+				),
+			),
+		)).Line(),
+
+		jen.Return(jen.Id("found"), jen.Nil()),
 	).Line()
 
 	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("Parse").Params(jen.Id("v").String()).Params(
