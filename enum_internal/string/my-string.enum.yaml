@@ -8,10 +8,10 @@ serialize:
 overwrite: true
 # skip-format: true
 values:
-    -   name: MyString1
+    -   name: My String 1
         desc: A description of MyString1
-    -   name: MyString2
+    -   name: My String 2
         desc: >
             A description of MyString2
             with more than one line
-    -   name: MyString3
+    -   name: My String 3
