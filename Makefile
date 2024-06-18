@@ -12,6 +12,7 @@ purge:
 	find . -name '*.enum.go' -type f -delete
 
 build:
+	go mod tidy
 	go build $(makefile_dir)/cmd/enumer
 
 generate: 
