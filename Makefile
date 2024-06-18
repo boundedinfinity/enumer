@@ -38,6 +38,10 @@ tag:
 	git tag -fa $(tag) -m "$(tag)"
 	git push -f origin $(tag)
 
-publish: test
+tag-list:
+	git fetch --tags
+	git tag --list | sort -V
+
+publish:
 	make push m=$(m)
 	make tag tag=$(m)

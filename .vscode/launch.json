@@ -5,7 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "cmd/main measurement", 
+            "name": "cmd/main area unit", 
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "cwd": "${workspaceFolder}/enum_internal/measurement",
+            "program": "${workspaceFolder}/cmd/enumer/main.go",
+            "args": [
+                "-config=./area-unit.enum.yaml",
+            ],
+        },
+        {
+            "name": "cmd/main measurement unit", 
             "type": "go",
             "request": "launch",
             "mode": "debug",

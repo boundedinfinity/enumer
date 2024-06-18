@@ -15,8 +15,10 @@ import (
 	"github.com/boundedinfinity/enumer"
 	"github.com/boundedinfinity/go-commoner/idiomatic/caser"
 	"github.com/boundedinfinity/go-commoner/idiomatic/extentioner"
+	"github.com/boundedinfinity/go-commoner/idiomatic/langer"
 	"github.com/boundedinfinity/go-commoner/idiomatic/pather"
 	"github.com/boundedinfinity/go-commoner/idiomatic/stringer"
+	"github.com/boundedinfinity/go-commoner/idiomatic/utfer"
 	"github.com/dave/jennifer/jen"
 	"github.com/gertd/go-pluralize"
 	"gopkg.in/yaml.v2"
@@ -255,7 +257,7 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 		enum.Package = enum.OutputPath
 		enum.Package = pather.Paths.Dir(enum.Package)
 		enum.Package = pather.Paths.Base(enum.Package)
-		enum.Package = stringer.ReplaceInList(enum.Package, []string{"-", " "}, "_")
+		enum.Package = stringer.Replace(enum.Package, "_", "-", " ")
 	}
 
 	if enum.Type == "" {
@@ -277,16 +279,16 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 		if stringer.IsEmpty(value.Name) && stringer.IsEmpty(value.Serialized) {
 			return fmt.Errorf("invalid values[%v] name or serialized value", i)
 		} else if stringer.IsEmpty(value.Name) && stringer.IsDefined(value.Serialized) {
-			value.Name = stringer.ReplaceNonLanguageCharacters(value.Serialized, " ", "_")
-			value.Name = caser.Convert(value.Name, caser.CaseTypes.Phrase, caser.CaseTypes.Pascal)
+			orig := value.Serialized
+			value.Name = langer.Go.MustIdentifier(orig)
+			value.Serialized = langer.Json.MustIdentifier(orig)
 		} else if stringer.IsDefined(value.Name) && stringer.IsEmpty(value.Serialized) {
-			value.Serialized = stringer.RemoveNonLanguageCharacters(value.Name, "_")
-			value.Serialized = caser.PascalToKebabLower(value.Serialized)
-			value.Name = stringer.RemoveNonLanguageCharacters(value.Name, "_")
-			value.Name = stringer.RemoveSpace(value.Name)
+			orig := value.Name
+			value.Name = langer.Go.MustIdentifier(orig)
+			value.Serialized = langer.Json.MustIdentifier(orig)
 		} else if stringer.IsDefined(value.Name) && stringer.IsDefined(value.Serialized) {
-			value.Name = stringer.RemoveNonLanguageCharacters(value.Name, "_")
-			value.Name = stringer.RemoveSpace(value.Name)
+			value.Name = langer.Go.MustIdentifier(value.Name)
+			value.Serialized = langer.Json.MustIdentifier(value.Serialized)
 		}
 
 		enum.Values[i] = value
@@ -379,7 +381,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 	f.Comment(box("Type")).Line()
 
 	if enum.Desc != "" {
-		f.Commentf("%s %s", enum.Type, stringer.RemoveNewlines(enum.Desc))
+		f.Commentf("%s %s", enum.Type, utfer.RemoveNewlines(enum.Desc))
 	}
 	f.Type().Id(enum.Type).String().Line()
 
@@ -553,7 +555,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 
 		for _, value := range enum.Values {
 			if value.Desc != "" {
-				g.Line().Commentf("%s %s", value.Name, stringer.RemoveNewlines(value.Desc))
+				g.Line().Commentf("%s %s", value.Name, utfer.RemoveNewlines(value.Desc))
 			}
 
 			g.Line().Id(value.Name).Op(":").Id(enum.Type).Parens(jen.Lit(value.Serialized))
