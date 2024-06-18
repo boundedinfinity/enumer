@@ -16,6 +16,7 @@ import (
 	"github.com/boundedinfinity/go-commoner/idiomatic/caser"
 	"github.com/boundedinfinity/go-commoner/idiomatic/extentioner"
 	"github.com/boundedinfinity/go-commoner/idiomatic/langer"
+	"github.com/boundedinfinity/go-commoner/idiomatic/mapper"
 	"github.com/boundedinfinity/go-commoner/idiomatic/pather"
 	"github.com/boundedinfinity/go-commoner/idiomatic/stringer"
 	"github.com/boundedinfinity/go-commoner/idiomatic/utfer"
@@ -275,20 +276,28 @@ func processEnum(args argsData, enum *enumer.EnumData) error {
 
 	for i := 0; i < len(enum.Values); i++ {
 		value := enum.Values[i]
+		translate := func(s string) string {
+			for from, to := range mapper.MergeCopy(enum.Translate, value.Translate) {
+				s = stringer.Replace(s, to, from)
+			}
+			return s
+		}
 
-		if stringer.IsEmpty(value.Name) && stringer.IsEmpty(value.Serialized) {
-			return fmt.Errorf("invalid values[%v] name or serialized value", i)
-		} else if stringer.IsEmpty(value.Name) && stringer.IsDefined(value.Serialized) {
-			orig := value.Serialized
-			value.Name = langer.Go.MustIdentifier(orig)
-			value.Serialized = langer.Json.MustIdentifier(orig)
-		} else if stringer.IsDefined(value.Name) && stringer.IsEmpty(value.Serialized) {
-			orig := value.Name
-			value.Name = langer.Go.MustIdentifier(orig)
-			value.Serialized = langer.Json.MustIdentifier(orig)
-		} else if stringer.IsDefined(value.Name) && stringer.IsDefined(value.Serialized) {
+		switch {
+		case stringer.IsDefined(value.Name) && stringer.IsDefined(value.Serialized):
+			value.Name = translate(value.Name)
 			value.Name = langer.Go.MustIdentifier(value.Name)
-			value.Serialized = langer.Json.MustIdentifier(value.Serialized)
+		case stringer.IsEmpty(value.Name) && stringer.IsDefined(value.Serialized):
+			value.Name = value.Serialized
+			value.Name = translate(value.Name)
+			value.Name = langer.Go.MustIdentifier(value.Name)
+		case stringer.IsDefined(value.Name) && stringer.IsEmpty(value.Serialized):
+			value.Serialized = value.Name
+			value.Serialized = langer.Json.MustIdentifier(value.Name)
+			value.Name = translate(value.Name)
+			value.Name = langer.Go.MustIdentifier(value.Name)
+		default:
+			return fmt.Errorf("invalid values[%v] name or serialized value", i)
 		}
 
 		enum.Values[i] = value

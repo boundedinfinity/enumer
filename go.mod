@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca
-	github.com/boundedinfinity/go-commoner v1.0.33
+	github.com/boundedinfinity/go-commoner v1.0.34
 	github.com/dave/jennifer v1.7.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/stretchr/testify v1.9.0

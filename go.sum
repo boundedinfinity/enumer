@@ -2,8 +2,8 @@ github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca h1:nbqTYb
 github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca/go.mod h1:+HdjtmUFg/tXdrQVaaIe1Amak/xgunLRVymFnmNFnP8=
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7 h1:kzZXL7PFUy8p+AAnUuWUwE20KL1xi3WsNpfmJd5rY6w=
 github.com/boundedinfinity/collection_util v0.0.0-20210527024233-37ff01a876b7/go.mod h1:KMN60klM/vjr5H+dMU3YHKo1pjeQJvPQ21DqpflFwsI=
-github.com/boundedinfinity/go-commoner v1.0.33 h1:SFRKepuh//PpWmOYNz7l//mWwrOL8TohjwLKJbrhiXQ=
-github.com/boundedinfinity/go-commoner v1.0.33/go.mod h1:YUXOPmJwMEkQp6QPY2IGY9GcMkvI/gSyBFlItqkBt6w=
+github.com/boundedinfinity/go-commoner v1.0.34 h1:pzBcYOjHrL68ywHAd2UOyB2W7bjhTlT8Zzly5cDD3aA=
+github.com/boundedinfinity/go-commoner v1.0.34/go.mod h1:YUXOPmJwMEkQp6QPY2IGY9GcMkvI/gSyBFlItqkBt6w=
 github.com/dave/jennifer v1.7.0 h1:uRbSBH9UTS64yXbh4FrMHfgfY762RD+C7bUPKODpSJE=
 github.com/dave/jennifer v1.7.0/go.mod h1:nXbxhEmQfOZhWml3D1cDK5M1FLnMSozpbFN/m3RmGZc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

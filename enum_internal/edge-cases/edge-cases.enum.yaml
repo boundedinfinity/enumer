@@ -1,0 +1,26 @@
+package: enum_internal
+overwrite: true
+values:
+    -   name: C++ source file
+        serialized: .cpp
+        translate:
+            +: p
+    -   name: irc6
+    -   name: Square Yard
+    -   serialized: foot
+        parse-from:
+          - ft
+          - "'"
+    -   serialized: meter
+        parse-from:
+          - m
+    -   name: Camel
+    -   name: Kebab
+    -   name: Kebab Lower
+    -   name: Kebab Upper
+    -   name: Pascal
+    -   name: Phrase
+    -   name: Snake
+    -   name: Snake Lower
+    -   name: Snake Upper
+    -   name: Unknown

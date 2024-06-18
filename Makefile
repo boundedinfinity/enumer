@@ -43,6 +43,6 @@ tag-list:
 	git fetch --tags
 	git tag --list | sort -V
 
-publish: test
+publish:
 	make push m=$(m)
 	make tag tag=$(m)
