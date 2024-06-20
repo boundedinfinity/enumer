@@ -9,21 +9,38 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func Test_Parse(t *testing.T) {
-	actual, err := enum_internal.MyStrings.Parse("my-string-1")
-	expected := enum_internal.MyStrings.MyString1
+func Test_Extention2MimeType(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected enum_internal.MyString
+		err      error
+	}{
+		{
+			name:     "case 1",
+			input:    "my-string-1",
+			expected: enum_internal.MyStrings.MyString1,
+			err:      nil,
+		},
+		{
+			name:     "case 2",
+			input:    "turd",
+			expected: enum_internal.MyStrings.Invalid,
+			err:      enum_internal.MyStrings.Err,
+		},
+	}
 
-	assert.Nil(t, err)
-	assert.Equal(t, expected, actual)
-}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(tt *testing.T) {
+			actual, err := enum_internal.MyStrings.Parse(tc.input)
 
-func Test_Parse_Err(t *testing.T) {
-	actual, err := enum_internal.MyStrings.Parse("xxxx")
-	expected := enum_internal.MyString("")
-
-	assert.ErrorIs(t, err, enum_internal.MyStrings.Err)
-	assert.Equal(t, "invalid MyString: xxxx is not one of my-string-1,MyString1,my-string-2,MyString2,my-string-3,MyString3", err.Error())
-	assert.Equal(t, expected, actual)
+			assert.ErrorIs(tt, err, tc.err)
+			if tc.err != nil {
+				assert.ErrorContains(t, err, tc.input)
+			}
+			assert.Equal(tt, tc.expected, actual)
+		})
+	}
 }
 
 func Test_String(t *testing.T) {

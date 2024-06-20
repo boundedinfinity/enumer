@@ -559,7 +559,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 	f.Comment(box("Companion struct")).Line()
 
 	f.Var().Id(companionVar).Op("=").Id(companionStruct).ValuesFunc(func(g *jen.Group) {
-		g.Line().Id("Err").Op(":").Qual("fmt", "Errorf").Params(jen.Lit("invalid " + enum.Type))
+		g.Line().Id("Err").Op(":").Qual("github.com/boundedinfinity/go-commoner/errorer", "New").Params(jen.Lit("invalid " + enum.Type))
 		g.Line().Id("Invalid").Op(":").Id(enum.Type).Parens(jen.Lit("invalid"))
 
 		for _, value := range enum.Values {
@@ -574,11 +574,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 
 	f.Type().Id(companionStruct).StructFunc(func(g *jen.Group) {
 		g.Id("Err").Error()
-		g.Id("errf").Func().Params(
-			jen.Any(),
-			jen.Op("...").Id(enum.Type),
-		).Error()
-
+		g.Id("errf").Func().Params(jen.Op("...").Any()).Error()
 		g.Id("parseMap").Map(jen.Id(enum.Type)).Index().String()
 		g.Id("Invalid").Id(enum.Type)
 
@@ -598,6 +594,22 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		),
 	).Line()
 
+	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("ToStrings").Params(
+		jen.Id("items").Op("...").Id(enum.Type),
+	).Params(
+		jen.Index().String(),
+	).Block(
+		jen.Var().Id("results").Index().String().Line(),
+
+		jen.For(
+			jen.Id("_").Op(",").Id("item").Op(":=").Range().Id("items").Block(
+				jen.Id("results").Op("=").Append(jen.Id("results"), jen.Id("item").Op(".").Id("String").Call()),
+			),
+		).Line(),
+
+		jen.Return(jen.Id("results")),
+	).Line()
+
 	f.Func().Params(jen.Id("t").Id(companionStruct)).Id("ParseFrom").Params(
 		jen.Id("v").String(),
 		jen.Id("items").Op("...").Id(enum.Type),
@@ -605,7 +617,7 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		jen.Id(enum.Type),
 		jen.Error(),
 	).Block(
-		jen.Var().Id("found").Id(enum.Type),
+		jen.Id("found").Op(":=").Id("t").Dot("Invalid"),
 		jen.Var().Id("ok").Bool().Line(),
 
 		jen.For(
@@ -629,11 +641,15 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 		).Line(),
 
 		jen.If(jen.Op("!").Id("ok").Block(
+			jen.Id("list").Op(":=").Qual("strings", "Join").Params(
+				jen.Id("t").Dot("ToStrings").Call(jen.Id("items").Op("...")),
+				jen.Lit(","),
+			),
 			jen.Return(
 				jen.Id("found"),
 				jen.Id("t").Dot("errf").Params(
 					jen.Id("v"),
-					jen.Id("items").Op("..."),
+					jen.Id("list"),
 				),
 			),
 		)).Line(),
@@ -685,29 +701,9 @@ func processTemplate(enum enumer.EnumData) ([]byte, error) {
 			}
 		})).Line()
 
-		g.Id(companionVar).Dot("errf").Op("=").Func().Params(
-			jen.Id("v").Any(),
-			jen.Id("items").Op("...").Id(enum.Type),
-		).Error().Block(
-			jen.Var().Id("xs").Index().String().Line(),
-			jen.For(
-				jen.Op("_").Op(",").Id("item").Op(":=").Range().Id("items"),
-			).Block(
-				jen.If(
-					jen.Id("x").Op(",").Id("ok").Op(":=").Id(companionVar).Dot("parseMap").Index(jen.Id("item")),
-					jen.Id("ok"),
-				).Block(
-					jen.Id("xs").Op("=").Append(jen.Id("xs"), jen.Id("x").Op("...")),
-				),
-			).Line(),
-			jen.Return(jen.Qual("fmt", "Errorf").Params(
-				jen.Line().Lit("%w: %v is not one of %s"),
-				jen.Line().Id(companionVar).Dot("Err"),
-				jen.Line().Id("v"),
-				jen.Line().Qual("strings", "Join").Params(jen.Id("xs"), jen.Lit(",")),
-				jen.Line(),
-			)),
-		)
+		g.Id(companionVar).Dot("errf").Op("=").Id(companionVar).Dot("Err").Op(".").Params(
+			jen.Op("*").Qual("github.com/boundedinfinity/go-commoner/errorer", "Errorer"),
+		).Dot("FormatFn").Params(jen.Lit("%v is not one of %s"))
 	}).Line()
 
 	content := fmt.Sprintf("%#v", f)

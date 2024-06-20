@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/boundedinfinity/asciibox v0.0.0-20210528224626-4bc42ed218ca
-	github.com/boundedinfinity/go-commoner v1.0.34
+	github.com/boundedinfinity/go-commoner v1.0.36
 	github.com/dave/jennifer v1.7.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/stretchr/testify v1.9.0
@@ -22,3 +22,5 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+
